@@ -12,7 +12,7 @@ export function createDatabase(dbPath: string = DB_PATH): InstanceType<typeof Da
   return instance;
 }
 
-let _db: InstanceType<typeof Database> = createDatabase();
+let _db: InstanceType<typeof Database> | null = process.env.VITEST ? null : createDatabase();
 
 export function setDatabase(instance: InstanceType<typeof Database>) {
   _db = instance;
@@ -22,6 +22,7 @@ export function setDatabase(instance: InstanceType<typeof Database>) {
 // This allows tests to swap the DB via setDatabase() without module mocking.
 const db = new Proxy({} as InstanceType<typeof Database>, {
   get(_target, prop: string | symbol) {
+    if (!_db) throw new Error('Database not initialised — call setDatabase() first');
     const value = (_db as any)[prop];
     if (typeof value === 'function') {
       return value.bind(_db);
