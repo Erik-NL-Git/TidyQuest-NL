@@ -166,6 +166,7 @@
       "gamificationEnabled": "Gamification",
       "gamificationEnabledDesc": "Aktiviert Rangliste, Streaks, Erfolge, Belohnungen und Münzen. Deaktivieren für einen einfacheren Paarmodus.",
       "adminRequired": "Ein Admin-Elternteil ist erforderlich, um Einstellungen zu ändern.",
+      "version": "Version",
       "data": "Daten",
       "dataPrivacy": "Daten & Datenschutz",
       "export": "Exportieren",

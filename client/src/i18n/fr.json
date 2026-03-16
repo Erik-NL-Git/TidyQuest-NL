@@ -166,6 +166,7 @@
       "gamificationEnabled": "Gamification",
       "gamificationEnabledDesc": "Active le classement, les séries, les succès, les récompenses et les pièces. Désactiver pour un mode couple simplifié.",
       "adminRequired": "Un parent admin est requis pour modifier les paramètres.",
+      "version": "Version",
       "data": "Données",
       "dataPrivacy": "Données et confidentialité",
       "export": "Exporter",

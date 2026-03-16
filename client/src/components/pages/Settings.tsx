@@ -796,6 +796,16 @@ export function Settings({
             {t('settings.adminRequired')}
           </div>
         )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 0', borderTop: '1px solid var(--warm-border)' }}>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <circle cx="10" cy="10" r="8" stroke="var(--warm-text-light)" strokeWidth="1.5" />
+            <path d="M10 6v4.5l3 1.5" stroke="var(--warm-text-light)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--warm-text)' }}>{t('settings.version')}</div>
+          </div>
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--warm-text-muted)' }}>v{__APP_VERSION__}</span>
+        </div>
       </div>
 
       {isAdmin && strictModeEnabled && (
@@ -1159,9 +1169,6 @@ export function Settings({
             </div>
           ))}
         </div>
-      </div>
-      <div style={{ borderTop: '1px solid var(--warm-border)', marginTop: 32, padding: '16px 0 8px', textAlign: 'center' }}>
-        <span style={{ fontSize: 11, color: 'var(--warm-text-muted)', fontWeight: 500, letterSpacing: '0.02em' }}>TidyQuest v{__APP_VERSION__}</span>
       </div>
     </div>
   );

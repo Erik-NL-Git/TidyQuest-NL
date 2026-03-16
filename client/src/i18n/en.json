@@ -166,6 +166,7 @@
       "gamificationEnabled": "Gamification",
       "gamificationEnabledDesc": "Enable leaderboard, streaks, achievements, rewards and coins. Disable for a simpler couple mode.",
       "adminRequired": "Parent admin required to change settings.",
+      "version": "Version",
       "data": "Data",
       "dataPrivacy": "Data & Privacy",
       "export": "Export",

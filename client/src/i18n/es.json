@@ -166,6 +166,7 @@
       "gamificationEnabled": "Gamificación",
       "gamificationEnabledDesc": "Activa clasificación, rachas, logros, recompensas y monedas. Desactiva para un modo pareja más simple.",
       "adminRequired": "Se requiere un padre administrador para cambiar ajustes.",
+      "version": "Versión",
       "data": "Datos",
       "dataPrivacy": "Datos y privacidad",
       "export": "Exportar",
