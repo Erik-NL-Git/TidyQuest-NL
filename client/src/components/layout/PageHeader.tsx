@@ -10,11 +10,11 @@ interface PageHeaderProps {
   onStreakClick?: () => void;
   onPointsClick?: () => void;
   userPoints?: number;
-  pointsPeriod?: 'all' | 'week' | 'month' | 'year';
+  pointsPeriodLabel?: string;
   gamificationEnabled?: boolean;
 }
 
-export function PageHeader({ title, subtitle, user, rightContent, onCoinsClick, onStreakClick, onPointsClick, userPoints, pointsPeriod = 'all', gamificationEnabled = true }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, user, rightContent, onCoinsClick, onStreakClick, onPointsClick, userPoints, pointsPeriodLabel, gamificationEnabled = true }: PageHeaderProps) {
   return (
     <div className="page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
       <div>
@@ -87,12 +87,10 @@ export function PageHeader({ title, subtitle, user, rightContent, onCoinsClick, 
           cursor: onPointsClick ? 'pointer' : 'default',
         }}>
           <PointsIcon />
-	  <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--warm-streak-text)' }}>{userPoints ?? user.points}</span>
-          {pointsPeriod !== 'all' && (
-            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--warm-text-light)', textTransform: 'uppercase' }}>{pointsPeriod}</span>
+          <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--warm-streak-text)' }}>{userPoints ?? user.points}</span>
+          {pointsPeriodLabel && (
+            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--warm-text-light)', textTransform: 'uppercase' }}>{pointsPeriodLabel}</span>
           )}
-
-
         </div>
         </>
         )}

@@ -66,7 +66,8 @@ router.post('/register', (req: AuthRequest, res: Response) => {
 
   const token = generateToken(result.lastInsertRowid as number);
   const user = db.prepare('SELECT id, username, displayName, role, avatarColor, avatarType, avatarPreset, avatarPhotoUrl, coins, currentStreak, goalCoins, goalStartAt, goalEndAt, language FROM users WHERE id = ?')
-    .get(result.lastInsertRowid);
+    .get(result.lastInsertRowid) as any;
+  user.points = 0;
 
   res.status(201).json({ token, user });
 });

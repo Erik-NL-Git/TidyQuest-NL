@@ -31,6 +31,7 @@ function AppContent() {
   const [familySettings, setFamilySettings] = useState<any[]>([]);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [pointsPeriod, setPointsPeriod] = useState<'all' | 'week' | 'month' | 'year'>('all');
+  const [pointsLeaderboard, setPointsLeaderboard] = useState<any[]>([]);
   const [leaderboardPeriod, setLeaderboardPeriod] = useState<'week' | 'month' | 'quarter' | 'year'>('week');
   const [completions, setCompletions] = useState<any[]>([]);
   const [coinsByEffort, setCoinsByEffort] = useState<Record<number, number>>({ 1: 5, 2: 10, 3: 15, 4: 20, 5: 25 });
@@ -257,16 +258,16 @@ function AppContent() {
   const periods: Array<'all' | 'week' | 'month' | 'year'> = ['all', 'week', 'month', 'year'];
   const myPoints = pointsPeriod === 'all'
     ? (user.points ?? 0)
-    : (leaderboard.find((u: any) => u.id === user.id)?.points ?? 0);
+    : (pointsLeaderboard.find((u: any) => u.id === user.id)?.points ?? 0);
+  const pointsPeriodLabel = pointsPeriod === 'all' ? '' : t(`period.${pointsPeriod}`);
   const handlePointsClick = async () => {
     const next = periods[(periods.indexOf(pointsPeriod) + 1) % periods.length];
     setPointsPeriod(next);
     if (next !== 'all') {
       const lb = await api.leaderboard(next);
-      setLeaderboard(lb);
+      setPointsLeaderboard(lb);
     } else {
-      const lb = await api.leaderboard('week');
-      setLeaderboard(lb);
+      setPointsLeaderboard([]);
     }
   };
   // Build flat tasks list for calendar
@@ -329,7 +330,7 @@ function AppContent() {
         <Routes>
           <Route path="/" element={
             <>
-              <PageHeader title={t('nav.home')} subtitle={today} user={user} onCoinsClick={() => navigate('/rewards')} onStreakClick={() => navigate("/achievements")} onPointsClick={handlePointsClick} userPoints={myPoints} pointsPeriod={pointsPeriod} gamificationEnabled={gamificationEnabled} />
+              <PageHeader title={t('nav.home')} subtitle={today} user={user} onCoinsClick={() => navigate('/rewards')} onStreakClick={() => navigate('/achievements')} onPointsClick={handlePointsClick} userPoints={myPoints} pointsPeriodLabel={pointsPeriodLabel} gamificationEnabled={gamificationEnabled} />
               {dashboardData && (
                 <Dashboard
                   data={dashboardData}
@@ -352,7 +353,7 @@ function AppContent() {
 
           <Route path="/rooms" element={
             <>
-              <PageHeader title={t('nav.rooms')} subtitle={`${rooms.length} ${t('app.roomsConfigured')}`} user={user} onCoinsClick={() => navigate('/rewards')} onStreakClick={() => navigate("/achievements")} onPointsClick={handlePointsClick} userPoints={myPoints} pointsPeriod={pointsPeriod} gamificationEnabled={gamificationEnabled} />
+              <PageHeader title={t('nav.rooms')} subtitle={`${rooms.length} ${t('app.roomsConfigured')}`} user={user} onCoinsClick={() => navigate('/rewards')} onStreakClick={() => navigate('/achievements')} onPointsClick={handlePointsClick} userPoints={myPoints} pointsPeriodLabel={pointsPeriodLabel} gamificationEnabled={gamificationEnabled} />
               <RoomsList rooms={rooms} language={user.language} onSelectRoom={(id) => navigate(`/rooms/${id}`)}
                 isAdmin={user.role === 'admin'}
                 users={familySettings}
@@ -378,7 +379,7 @@ function AppContent() {
 
           <Route path="/calendar" element={
             <>
-              <PageHeader title={t('nav.calendar')} subtitle={t('app.calendarSubtitle')} user={user} onCoinsClick={() => navigate('/rewards')} onStreakClick={() => navigate("/achievements")} onPointsClick={handlePointsClick} userPoints={myPoints} pointsPeriod={pointsPeriod} gamificationEnabled={gamificationEnabled} />
+              <PageHeader title={t('nav.calendar')} subtitle={t('app.calendarSubtitle')} user={user} onCoinsClick={() => navigate('/rewards')} onStreakClick={() => navigate('/achievements')} onPointsClick={handlePointsClick} userPoints={myPoints} pointsPeriodLabel={pointsPeriodLabel} gamificationEnabled={gamificationEnabled} />
               <Calendar completions={completions} tasks={allTasks} language={user.language} />
             </>
           } />
@@ -386,7 +387,7 @@ function AppContent() {
           <Route path="/leaderboard" element={
             gamificationEnabled ? (
             <>
-              <PageHeader title={t('app.leaderboardTitle')} subtitle={t('app.leaderboardSubtitle')} user={user} onCoinsClick={() => navigate('/rewards')} onStreakClick={() => navigate("/achievements")} onPointsClick={handlePointsClick} userPoints={myPoints} pointsPeriod={pointsPeriod} gamificationEnabled={gamificationEnabled} />
+              <PageHeader title={t('app.leaderboardTitle')} subtitle={t('app.leaderboardSubtitle')} user={user} onCoinsClick={() => navigate('/rewards')} onStreakClick={() => navigate('/achievements')} onPointsClick={handlePointsClick} userPoints={myPoints} pointsPeriodLabel={pointsPeriodLabel} gamificationEnabled={gamificationEnabled} />
               <Leaderboard users={leaderboard} language={user.language} period={leaderboardPeriod} onPeriodChange={handleLeaderboardPeriodChange} />
             </>
             ) : <Navigate to="/" replace />
@@ -394,27 +395,27 @@ function AppContent() {
 
           <Route path="/activity" element={
             <>
-              <PageHeader title={t('nav.activity')} subtitle={t('app.activitySubtitle')} user={user} onCoinsClick={() => navigate('/rewards')} onStreakClick={() => navigate("/achievements")} onPointsClick={handlePointsClick} userPoints={myPoints} pointsPeriod={pointsPeriod} gamificationEnabled={gamificationEnabled} />
+              <PageHeader title={t('nav.activity')} subtitle={t('app.activitySubtitle')} user={user} onCoinsClick={() => navigate('/rewards')} onStreakClick={() => navigate('/achievements')} onPointsClick={handlePointsClick} userPoints={myPoints} pointsPeriodLabel={pointsPeriodLabel} gamificationEnabled={gamificationEnabled} />
               <History language={user.language} isAdmin={user.role === 'admin'} />
             </>
           } />
           <Route path="/history" element={
             <>
-              <PageHeader title={t('nav.activity')} subtitle={t('app.activitySubtitle')} user={user} onCoinsClick={() => navigate('/rewards')} onStreakClick={() => navigate("/achievements")} onPointsClick={handlePointsClick} userPoints={myPoints} pointsPeriod={pointsPeriod} gamificationEnabled={gamificationEnabled} />
+              <PageHeader title={t('nav.activity')} subtitle={t('app.activitySubtitle')} user={user} onCoinsClick={() => navigate('/rewards')} onStreakClick={() => navigate('/achievements')} onPointsClick={handlePointsClick} userPoints={myPoints} pointsPeriodLabel={pointsPeriodLabel} gamificationEnabled={gamificationEnabled} />
               <History language={user.language} isAdmin={user.role === 'admin'} />
             </>
           } />
 
           <Route path="/profile" element={
             <>
-              <PageHeader title={t('nav.profile')} subtitle={t('app.profileSubtitle')} user={user} onCoinsClick={() => navigate('/rewards')} onStreakClick={() => navigate("/achievements")} onPointsClick={handlePointsClick} userPoints={myPoints} pointsPeriod={pointsPeriod} gamificationEnabled={gamificationEnabled} />
+              <PageHeader title={t('nav.profile')} subtitle={t('app.profileSubtitle')} user={user} onCoinsClick={() => navigate('/rewards')} onStreakClick={() => navigate('/achievements')} onPointsClick={handlePointsClick} userPoints={myPoints} pointsPeriodLabel={pointsPeriodLabel} gamificationEnabled={gamificationEnabled} />
               <Profile user={user} onSave={async () => { await refreshUser(); }} onLogout={() => { logout(); navigate('/login', { replace: true }); }} />
             </>
           } />
 
           <Route path="/settings" element={
             <>
-              <PageHeader title={t('nav.settings')} subtitle={t('app.settingsSubtitle')} user={user} onCoinsClick={() => navigate('/rewards')} onStreakClick={() => navigate("/achievements")} onPointsClick={handlePointsClick} userPoints={myPoints} pointsPeriod={pointsPeriod} gamificationEnabled={gamificationEnabled} />
+              <PageHeader title={t('nav.settings')} subtitle={t('app.settingsSubtitle')} user={user} onCoinsClick={() => navigate('/rewards')} onStreakClick={() => navigate('/achievements')} onPointsClick={handlePointsClick} userPoints={myPoints} pointsPeriodLabel={pointsPeriodLabel} gamificationEnabled={gamificationEnabled} />
               <Settings
                 user={user}
                 family={familySettings}
@@ -478,7 +479,7 @@ function AppContent() {
           <Route path="/achievements" element={
             gamificationEnabled ? (
             <>
-              <PageHeader title={t('nav.achievements')} subtitle={t('app.achievementsSubtitle')} user={user} onCoinsClick={() => navigate('/rewards')} onStreakClick={() => navigate("/achievements")} onPointsClick={handlePointsClick} userPoints={myPoints} pointsPeriod={pointsPeriod} gamificationEnabled={gamificationEnabled} />
+              <PageHeader title={t('nav.achievements')} subtitle={t('app.achievementsSubtitle')} user={user} onCoinsClick={() => navigate('/rewards')} onStreakClick={() => navigate('/achievements')} onPointsClick={handlePointsClick} userPoints={myPoints} pointsPeriodLabel={pointsPeriodLabel} gamificationEnabled={gamificationEnabled} />
               <Achievements data={achievementsData} language={user.language} />
             </>
             ) : <Navigate to="/" replace />
@@ -486,7 +487,7 @@ function AppContent() {
           <Route path="/rewards" element={
             gamificationEnabled ? (
             <>
-              <PageHeader title={t('nav.rewards')} subtitle={t('app.rewardsSubtitle')} user={user} onCoinsClick={() => navigate('/rewards')} onStreakClick={() => navigate("/achievements")} onPointsClick={handlePointsClick} userPoints={myPoints} pointsPeriod={pointsPeriod} gamificationEnabled={gamificationEnabled} />
+              <PageHeader title={t('nav.rewards')} subtitle={t('app.rewardsSubtitle')} user={user} onCoinsClick={() => navigate('/rewards')} onStreakClick={() => navigate('/achievements')} onPointsClick={handlePointsClick} userPoints={myPoints} pointsPeriodLabel={pointsPeriodLabel} gamificationEnabled={gamificationEnabled} />
               <Rewards
                 language={user.language}
                 rewards={rewardsData.rewards}
@@ -536,7 +537,7 @@ function RoomDetailWrapper({ rooms, user, users, coinsByEffort, gamificationEnab
 
   return (
     <>
-      <PageHeader title={roomDisplayName(room.name, room.roomType)} subtitle={`${room.tasks?.length || 0} ${t('rooms.tasksTracked')}`} user={user} onCoinsClick={() => navigate('/rewards')} onStreakClick={() => navigate("/achievements")} gamificationEnabled={gamificationEnabled} />
+      <PageHeader title={roomDisplayName(room.name, room.roomType)} subtitle={`${room.tasks?.length || 0} ${t('rooms.tasksTracked')}`} user={user} onCoinsClick={() => navigate('/rewards')} onStreakClick={() => navigate('/achievements')} gamificationEnabled={gamificationEnabled} />
       <RoomDetail room={room} language={user?.language} isAdmin={user?.role === 'admin'} currentUserId={user?.id} currentUserRole={user?.role} users={users} coinsByEffort={coinsByEffort} onCompleteTask={onCompleteTask} onBack={() => navigate('/rooms')} onRefresh={onRefresh} />
     </>
   );
