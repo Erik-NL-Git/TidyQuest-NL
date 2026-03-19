@@ -106,6 +106,7 @@ interface DashboardProps {
   onNavigateToActivity: () => void;
   onRewardRequestAction: (id: number, status: 'approved' | 'rejected') => void | Promise<void>;
   gamificationEnabled?: boolean;
+  leaderboardPeriod?: 'week' | 'month' | 'quarter' | 'year';
 }
 
 /* ── Component ── */
@@ -121,6 +122,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   onNavigateToActivity,
   onRewardRequestAction,
   gamificationEnabled = true,
+  leaderboardPeriod = 'week',
 }) => {
   const { taskName, roomDisplayName, timeAgo, t } = useTranslation(language);
   const { houseHealth, rooms, todaysQuests, nextTasks, myGoal, childrenGoals = [], pendingRewardRequests = [], currentUser, recentActivity } = data;
@@ -368,7 +370,11 @@ const Dashboard: React.FC<DashboardProps> = ({
                     </div>
                   </div>
                   <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--warm-streak-subtext)', backgroundColor: 'var(--warm-accent-light)', border: '1px solid var(--warm-streak-border)', borderRadius: 999, padding: '3px 8px' }}>
-                    {t('calendar.inDays').replace('{days}', `${q.dueInDays || 0}`)}
+                    {(q.dueInDays ?? 0) <= 0
+                      ? t('calendar.today')
+                      : (q.dueInDays === 1)
+                        ? t('calendar.tomorrow')
+                        : t('calendar.inDays').replace('{days}', `${q.dueInDays}`)}
                   </div>
                 </div>
               );
@@ -645,7 +651,10 @@ const Dashboard: React.FC<DashboardProps> = ({
               margin: '0 0 12px',
             }}
           >
-            {t('leaderboard.thisWeek')}
+            {leaderboardPeriod === 'month' ? t('leaderboard.thisMonth')
+              : leaderboardPeriod === 'quarter' ? t('leaderboard.thisQuarter')
+              : leaderboardPeriod === 'year' ? t('leaderboard.thisYear')
+              : t('leaderboard.thisWeek')}
           </h3>
           {sortedFamily.map((u, i) => (
             <div

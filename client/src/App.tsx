@@ -178,7 +178,7 @@ function AppContent() {
       }
       setConfetti(true);
       refreshUser();
-      await refreshRooms();
+      await Promise.all([refreshRooms(), loadDashboard()]);
       setTimeout(() => setConfetti(false), 2200);
     } catch (err) {
       setConfetti(false);
@@ -322,6 +322,7 @@ function AppContent() {
                   users={familySettings}
                   language={user.language}
                   gamificationEnabled={gamificationEnabled}
+                  leaderboardPeriod={leaderboardPeriod}
                   onCompleteTask={handleCompleteTask}
                   onRefresh={loadDashboard}
                   onNavigateToRoom={(id) => navigate(`/rooms/${id}`)}
@@ -477,6 +478,12 @@ function AppContent() {
                 rewards={rewardsData.rewards}
                 mine={rewardsData.mine}
                 userCoins={user.coins}
+                isAdmin={user.role === 'admin'}
+                pendingRequests={dashboardData?.pendingRewardRequests}
+                onRewardRequestAction={async (id, status) => {
+                  await api.updateRedemptionStatus(id, status);
+                  await Promise.all([loadDashboard(), loadRewards()]);
+                }}
                 onRedeem={async (rewardId: number) => {
                   await api.redeemReward(rewardId);
                   await refreshUser();

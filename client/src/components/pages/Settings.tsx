@@ -709,7 +709,7 @@ export function Settings({
             />
           </div>
         )}
-        {isAdmin && (
+        {isAdmin && gamificationEnabled && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 0', borderTop: '1px solid var(--warm-border)' }}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <path d="M4 6h12M4 10h12M4 14h12" stroke="var(--warm-text-light)" strokeWidth="1.5" strokeLinecap="round" />
@@ -806,7 +806,7 @@ export function Settings({
         </div>
       )}
 
-      {isAdmin && (
+      {isAdmin && gamificationEnabled && (
         <div className="tq-card tq-card-padded settings-admin-card">
           <h3 className="tq-card-title">{t('settings.coinsPerEffort')}</h3>
           <div style={{ fontSize: 11, color: 'var(--warm-text-light)', fontWeight: 600, marginBottom: 10 }}>{t('settings.coinsPerEffortDesc')}</div>
