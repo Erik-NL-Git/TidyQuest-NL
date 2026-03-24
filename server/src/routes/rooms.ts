@@ -275,11 +275,15 @@ router.post('/', (req: AuthRequest, res: Response) => {
     insertedTaskIds.push(taskResult.lastInsertRowid as number);
   }
 
-  // If the room is assigned to a user, also assign all tasks to that user
-  if (resolvedAssignedUserId !== null) {
-    const insertAssignee = db.prepare('INSERT OR IGNORE INTO task_assignees (taskId, userId, coinPercentage) VALUES (?, ?, 0)');
-    for (const taskId of insertedTaskIds) {
-      insertAssignee.run(taskId, resolvedAssignedUserId);
+  // Assign tasks to users: per-task assignment takes priority, then room-level fallback
+  const insertAssignee = db.prepare('INSERT OR IGNORE INTO task_assignees (taskId, userId, coinPercentage) VALUES (?, ?, 0)');
+  for (let i = 0; i < insertedTaskIds.length; i++) {
+    const taskId = insertedTaskIds[i];
+    const task = tasksToInsert[i];
+    const taskAssignedUserId = task.assignedUserId != null ? Number(task.assignedUserId) : null;
+    const effectiveUserId = taskAssignedUserId || resolvedAssignedUserId;
+    if (effectiveUserId) {
+      insertAssignee.run(taskId, effectiveUserId);
     }
   }
 

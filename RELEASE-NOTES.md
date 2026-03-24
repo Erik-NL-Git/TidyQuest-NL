@@ -1,8 +1,8 @@
-# TidyQuest v0.5.0 Release Notes
+# TidyQuest v0.5.0-beta.1 Release Notes
 
 > **Date:** 2026-03-24
 
-This release includes 5 new features (largely from community PRs by @stonkage), quality-of-life improvements, and CI fixes.
+This beta release includes 6 new features (largely from community PRs by @stonkage), quality-of-life improvements, and CI fixes.
 
 ---
 
@@ -38,6 +38,11 @@ This release includes 5 new features (largely from community PRs by @stonkage), 
 - Admin can now add template tasks to any existing room via **Templates** button
 - Shows same pre-defined tasks as room creation wizard
 - Tasks already in the room are automatically excluded from the list
+
+### Per-Task Assignment in Room Creation (#57)
+- When creating a new room, each pre-defined task can now be individually assigned to a user
+- Per-task assignment overrides the room-level assignment
+- Unassigned tasks fall back to the room-level user (if set)
 
 ### Larger Leaderboard Avatars (#60) — via PR #64 by @stonkage
 - Podium avatars sized by rank: 1st place 80px, 2nd 64px, 3rd 56px
@@ -77,7 +82,7 @@ None. This release is backward-compatible with v0.4.x data. Two new columns (`on
 
 ## Upgrade from v0.4.x
 
-1. Pull the new Docker image: `docker pull mellowfox/tidyquest:0.5.0`
+1. Pull the new Docker image: `docker pull mellowfox/tidyquest:0.5.0-beta.1`
 2. Restart the container
 3. Database migrations run automatically
 

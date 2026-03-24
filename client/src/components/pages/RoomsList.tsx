@@ -51,6 +51,7 @@ interface TaskConfig {
   isSeasonal: boolean;
   selected: boolean;
   initialHealth: number;
+  assignedUserId?: string;
 }
 
 interface AssignedUser {
@@ -144,6 +145,7 @@ export function RoomsList({ rooms, language, isAdmin, users, onSelectRoom, onCre
       effort: t.effort,
       isSeasonal: t.isSeasonal,
       initialHealth: t.initialHealth,
+      assignedUserId: t.assignedUserId && t.assignedUserId !== 'none' ? parseInt(t.assignedUserId) : null,
     }));
     const assignedUserId = createAssignedUserId === 'none' ? null : parseInt(createAssignedUserId);
     try {
@@ -199,7 +201,7 @@ export function RoomsList({ rooms, language, isAdmin, users, onSelectRoom, onCre
     await onDeleteRoom(roomId);
   };
 
-  const assignableUsers = (users || []).filter(u => u.role !== 'admin');
+  const assignableUsers = users || [];
 
   const openAssignModal = (e: React.MouseEvent, room: any) => {
     e.stopPropagation();
@@ -555,7 +557,7 @@ export function RoomsList({ rooms, language, isAdmin, users, onSelectRoom, onCre
                           </div>
 
                           {task.selected && (
-                            <div className="task-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 12, paddingLeft: 28 }}>
+                            <div className="task-grid" style={{ display: 'grid', gridTemplateColumns: assignableUsers.length > 0 ? '1fr 1fr 1fr 1fr 1fr' : '1fr 1fr 1fr 1fr', gap: 12, paddingLeft: 28 }}>
                               {/* Current State */}
                               <div>
                                 <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--warm-text-light)', textTransform: 'uppercase', marginBottom: 6 }}>
@@ -634,6 +636,25 @@ export function RoomsList({ rooms, language, isAdmin, users, onSelectRoom, onCre
                                   ))}
                                 </select>
                               </div>
+
+                              {/* Assign */}
+                              {assignableUsers.length > 0 && (
+                                <div>
+                                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--warm-text-light)', textTransform: 'uppercase', marginBottom: 6 }}>
+                                    {t('rooms.assignTask')}
+                                  </div>
+                                  <select
+                                    value={task.assignedUserId || 'none'}
+                                    onChange={(e) => updateTask(idx, { assignedUserId: e.target.value })}
+                                    className="tq-input-compact" style={{ width: '100%', cursor: 'pointer', fontSize: 11 }}
+                                  >
+                                    <option value="none">—</option>
+                                    {assignableUsers.map(u => (
+                                      <option key={u.id} value={String(u.id)}>{u.displayName}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
