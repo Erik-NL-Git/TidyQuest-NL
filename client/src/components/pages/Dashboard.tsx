@@ -150,10 +150,24 @@ const Dashboard: React.FC<DashboardProps> = ({
 }) => {
   const { taskName, roomDisplayName, timeAgo, t } = useTranslation(language);
   const { houseHealth, rooms, todaysQuests, nextTasks, readyToComplete, scheduledUpcoming, onDemandQuests, completedToday = [], myGoal, childrenGoals = [], pendingRewardRequests = [], currentUser, recentActivity } = data;
-  const readyTasks = readyToComplete ?? todaysQuests.filter(q => !q.onDemand);
-  const scheduledTasks = scheduledUpcoming ?? nextTasks;
-  const onDemandTasks = onDemandQuests ?? todaysQuests.filter(q => q.onDemand);
+  const allReadyTasks = readyToComplete ?? todaysQuests.filter(q => !q.onDemand);
+  const allScheduledTasks = scheduledUpcoming ?? nextTasks;
+  const allOnDemandTasks = onDemandQuests ?? todaysQuests.filter(q => q.onDemand);
   const [adminModalQuest, setAdminModalQuest] = useState<Quest | null>(null);
+  const [taskFilter, setTaskFilter] = useState<'all' | 'mine'>(() => {
+    try { return (localStorage.getItem('tq-task-filter') as 'all' | 'mine') || 'all'; }
+    catch { return 'all'; }
+  });
+  useEffect(() => { localStorage.setItem('tq-task-filter', taskFilter); }, [taskFilter]);
+  const filterQuests = (quests: Quest[]) => {
+    if (taskFilter === 'all') return quests;
+    return quests.filter(q =>
+      !q.effectiveAssignedUserIds?.length || q.effectiveAssignedUserIds.includes(currentUser.id)
+    );
+  };
+  const readyTasks = filterQuests(allReadyTasks);
+  const scheduledTasks = filterQuests(allScheduledTasks);
+  const onDemandTasks = filterQuests(allOnDemandTasks);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [showCustomize, setShowCustomize] = useState(false);
 
@@ -308,9 +322,19 @@ const Dashboard: React.FC<DashboardProps> = ({
             <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--warm-text)', margin: 0 }}>
               {t('dashboard.todaysQuests')}
             </h3>
-            <span style={{ fontSize: 11, fontWeight: 800, backgroundColor: 'var(--warm-badge-bg)', color: 'var(--warm-badge-text)', padding: '4px 12px', borderRadius: 99 }}>
-              {readyTasks.length + onDemandTasks.length} {t('dashboard.pending')}
-            </span>
+            <div style={{ display: 'flex', gap: 0, borderRadius: 99, overflow: 'hidden', border: '1.5px solid var(--warm-border)' }}>
+              {(['all', 'mine'] as const).map((f) => (
+                <button key={f} onClick={() => setTaskFilter(f)}
+                  style={{
+                    padding: '4px 12px', fontSize: 11, fontWeight: 700, fontFamily: 'Nunito', cursor: 'pointer',
+                    border: 'none', background: taskFilter === f ? 'var(--warm-accent)' : 'var(--warm-bg-subtle)',
+                    color: taskFilter === f ? '#fff' : 'var(--warm-text-light)',
+                    transition: 'all 0.15s ease',
+                  }}>
+                  {f === 'all' ? t('dashboard.allTasks') : t('dashboard.myTasks')}
+                </button>
+              ))}
+            </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
 
