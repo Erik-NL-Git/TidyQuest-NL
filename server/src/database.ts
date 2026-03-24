@@ -1,11 +1,16 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import fs from 'fs';
 import bcrypt from 'bcryptjs';
 import { suggestTaskIcon } from './utils/taskIcons';
 
 const DB_PATH = path.join(__dirname, '..', '..', 'data', 'tidyquest.db');
 
 export function createDatabase(dbPath: string = DB_PATH): InstanceType<typeof Database> {
+  const dir = path.dirname(dbPath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
   const instance = new Database(dbPath);
   instance.pragma('journal_mode = WAL');
   instance.pragma('foreign_keys = ON');

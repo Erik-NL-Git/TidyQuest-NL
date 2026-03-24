@@ -78,6 +78,8 @@ function runSchema(db: InstanceType<typeof Database>) {
       assignedToChildren INTEGER NOT NULL DEFAULT 0,
       assignedUserId INTEGER REFERENCES users(id) ON DELETE SET NULL,
       assignmentMode TEXT NOT NULL DEFAULT 'first',
+      onDemand INTEGER NOT NULL DEFAULT 0,
+      showInDashboard INTEGER NOT NULL DEFAULT 0,
       createdAt TEXT NOT NULL DEFAULT (datetime('now')),
       FOREIGN KEY (roomId) REFERENCES rooms(id) ON DELETE CASCADE
     );
