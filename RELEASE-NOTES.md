@@ -1,3 +1,31 @@
+# TidyQuest v0.5.0-beta.4 Release Notes
+
+> **Date:** 2026-04-28
+
+Bug fix release.
+
+---
+
+## Bug Fixes
+
+- **#83**: Goals no longer auto-complete instantly when created — the auto-complete check now counts only coins earned since the goal was created (using `createdAt` as fallback when no `startAt` is set), preventing multiple goals from silently completing on creation
+- **#95**: New tasks now default to "Dirty" (0% health) instead of "Clean" (100%) — applies to task creation in both room setup wizard and room detail view
+
+## New Features (via merged PRs)
+
+- **Home Assistant integration** — new `custom_components/tidyquest` package; exposes each task as a sensor and provides services: `complete_task`, `create_task`, `update_task`, `delete_task`, `reset_task`, `refresh` (contributed by @C-Blais)
+- **Task reset endpoint** — new admin-only `POST /tasks/:id/reset` API endpoint removes today's completions and deducts the associated coins, making a task immediately due again (contributed by @C-Blais)
+
+---
+
+## Upgrade from beta.3
+
+1. Pull the new Docker image: `docker pull mellowfox/tidyquest:0.5.0-beta.4`
+2. Restart the container
+3. No database migrations required
+
+---
+
 # TidyQuest v0.5.0-beta.3 Release Notes
 
 > **Date:** 2026-04-07

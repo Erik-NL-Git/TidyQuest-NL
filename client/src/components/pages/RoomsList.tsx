@@ -121,7 +121,7 @@ export function RoomsList({ rooms, language, isAdmin, users, onSelectRoom, onCre
             effort: t.effort,
             isSeasonal: !!t.isSeasonal,
             selected: false,
-            initialHealth: 100,
+            initialHealth: 0,
           };
         }));
         setLoadingTasks(false);
@@ -186,7 +186,7 @@ export function RoomsList({ rooms, language, isAdmin, users, onSelectRoom, onCre
       effort: 2,
       isSeasonal: false,
       selected: true,
-      initialHealth: 100,
+      initialHealth: 0,
     }]);
     setNewTaskName('');
   };

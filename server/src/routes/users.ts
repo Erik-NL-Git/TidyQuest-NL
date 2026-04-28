@@ -48,10 +48,13 @@ function syncPrimaryGoal(userId: number) {
 
   // Auto-complete any active goals where coins >= target
   const activeGoals = db.prepare(
-    `SELECT id, goalCoins, startAt, endAt FROM user_goals WHERE userId = ? AND status = 'active'`
-  ).all(userId) as { id: number; goalCoins: number; startAt: string | null; endAt: string | null }[];
+    `SELECT id, goalCoins, startAt, endAt, createdAt FROM user_goals WHERE userId = ? AND status = 'active'`
+  ).all(userId) as { id: number; goalCoins: number; startAt: string | null; endAt: string | null; createdAt: string }[];
   for (const g of activeGoals) {
-    const from = g.startAt || '1970-01-01T00:00:00.000Z';
+    // Use startAt if set, otherwise fall back to createdAt so that goals without an
+    // explicit start date only count coins earned after the goal was created — prevents
+    // goals from auto-completing instantly when the user already has enough coins.
+    const from = g.startAt || g.createdAt || '1970-01-01T00:00:00.000Z';
     const to = g.endAt || '9999-12-31T23:59:59.999Z';
     const row = db.prepare(
       "SELECT COALESCE(SUM(coinsEarned), 0) as total FROM task_completions WHERE userId = ? AND status = 'approved' AND completedAt >= ? AND completedAt <= ?"

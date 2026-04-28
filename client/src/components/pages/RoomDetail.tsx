@@ -179,7 +179,7 @@ export function RoomDetail({ room, language, isAdmin, currentUserId, currentUser
   const [newFreqValue, setNewFreqValue] = useState(7);
   const [newFreqUnit, setNewFreqUnit] = useState('days');
   const [newTaskEffort, setNewTaskEffort] = useState(2);
-  const [newTaskHealth, setNewTaskHealth] = useState(100);
+  const [newTaskHealth, setNewTaskHealth] = useState(0);
   const [newTaskIconKey, setNewTaskIconKey] = useState('sparkle');
   const [newAssignmentType, setNewAssignmentType] = useState<'none' | 'users'>('none');
   const [newAssignmentUserIds, setNewAssignmentUserIds] = useState<number[]>([]);
