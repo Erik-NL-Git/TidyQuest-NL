@@ -4,10 +4,12 @@
 
 **TidyQuest** is a self-hosted web application that gamifies housework using RPG mechanics. Complete tasks, earn coins, unlock achievements, and compete with your family on the leaderboard.
 
-![Version](https://img.shields.io/badge/version-0.5.0--beta.2-orange.svg)
+![Version](https://img.shields.io/badge/version-0.5.0-blue.svg)
 ![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)
 ![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)
 [![Discord](https://img.shields.io/badge/Discord-Join%20us-5865F2?logo=discord&logoColor=white)](https://discord.gg/ucXmKM6y)
+
+---
 
 > [!WARNING]
 > **Early-stage project** — TidyQuest is under active development. You may encounter bugs, incomplete features, or breaking changes between versions. Back up your data regularly and feel free to [open an issue](https://github.com/mellow-fox/TidyQuest/issues) if something breaks.
