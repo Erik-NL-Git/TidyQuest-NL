@@ -1,3 +1,32 @@
+# TidyQuest v0.5.1 Release Notes
+
+> **Date:** 2026-04-29
+
+Community contributions release — three new features and one security update.
+
+---
+
+## What's new
+
+### New Features
+
+- **Collapsible sidebar** — click the hamburger icon to collapse the sidebar to icons-only (60px); state persists in localStorage. Hovering a collapsed icon shows a tooltip with the nav label (contributed by @ashtonchase)
+- **Edit reward title & description** — admins can now edit the name and description of rewards in the catalog, not just the coin cost (contributed by @ashtonchase)
+- **Sorted icon picker** — the task icon dropdown is now sorted alphabetically in the user's language across all three entry points: task edit, task add, and room creation wizard (contributed by @ashtonchase)
+
+### Security
+
+- postcss 8.5.6 → 8.5.12 (arbitrary file read via user-generated CSS; XSS via unescaped `</style>`)
+
+---
+
+## Upgrade
+
+1. Pull the new Docker image: `docker pull mellowfox/tidyquest:latest`
+2. Restart the container
+
+---
+
 # TidyQuest v0.5.0 Release Notes
 
 > **Date:** 2026-04-28
