@@ -166,15 +166,17 @@ export function Sidebar({ user, isMobileOpen = false, onClose, gamificationEnabl
               onClick={handleNavClick}
             >
               {({ isActive }) => (
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: effectiveCollapsed ? '11px 0' : '11px 16px',
-                  justifyContent: effectiveCollapsed ? 'center' : 'flex-start',
-                  borderRadius: 14,
-                  backgroundColor: isActive ? 'var(--warm-sidebar-active)' : 'transparent',
-                  borderLeft: isActive ? '3px solid var(--warm-accent)' : '3px solid transparent',
-                  transition: 'all 0.15s ease',
-                }}>
+                <div
+                  title={effectiveCollapsed ? t(`nav.${item.label.toLowerCase()}`) : undefined}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: effectiveCollapsed ? '11px 0' : '11px 16px',
+                    justifyContent: effectiveCollapsed ? 'center' : 'flex-start',
+                    borderRadius: 14,
+                    backgroundColor: isActive ? 'var(--warm-sidebar-active)' : 'transparent',
+                    borderLeft: isActive ? '3px solid var(--warm-accent)' : '3px solid transparent',
+                    transition: 'all 0.15s ease',
+                  }}>
                   <span style={{ flexShrink: 0 }}><item.Icon active={isActive} /></span>
                   {!effectiveCollapsed && (
                     <span style={{

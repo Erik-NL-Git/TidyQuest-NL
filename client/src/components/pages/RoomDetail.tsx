@@ -502,7 +502,7 @@ export function RoomDetail({ room, language, isAdmin, currentUserId, currentUser
                     >
                       {TASK_ICON_OPTIONS
                         .slice()
-                        .sort((a, b) => a.label.localeCompare(b.label))
+                        .sort((a, b) => t(`taskIcons.${a.key}`).localeCompare(t(`taskIcons.${b.key}`)))
                         .map((opt) => (
                           <option key={opt.key} value={opt.key}>{t(`taskIcons.${opt.key}`)}</option>
                         ))}
@@ -855,9 +855,12 @@ export function RoomDetail({ room, language, isAdmin, currentUserId, currentUser
                   onChange={(e) => setNewTaskIconKey(e.target.value)}
                   className="tq-input-compact"
                 >
-                  {TASK_ICON_OPTIONS.map((opt) => (
-                    <option key={opt.key} value={opt.key}>{t(`taskIcons.${opt.key}`)}</option>
-                  ))}
+                  {TASK_ICON_OPTIONS
+                    .slice()
+                    .sort((a, b) => t(`taskIcons.${a.key}`).localeCompare(t(`taskIcons.${b.key}`)))
+                    .map((opt) => (
+                      <option key={opt.key} value={opt.key}>{t(`taskIcons.${opt.key}`)}</option>
+                    ))}
                 </select>
               </div>
               {!room.assignedUserId && (

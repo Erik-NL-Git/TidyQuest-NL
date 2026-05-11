@@ -631,9 +631,12 @@ export function RoomsList({ rooms, language, isAdmin, users, onSelectRoom, onCre
                                   onChange={(e) => updateTask(idx, { iconKey: e.target.value })}
                                   className="tq-input-compact" style={{ width: '100%', cursor: 'pointer', fontSize: 11 }}
                                 >
-                                  {TASK_ICON_OPTIONS.map((opt) => (
-                                    <option key={opt.key} value={opt.key}>{t(`taskIcons.${opt.key}`)}</option>
-                                  ))}
+                                  {TASK_ICON_OPTIONS
+                                    .slice()
+                                    .sort((a, b) => t(`taskIcons.${a.key}`).localeCompare(t(`taskIcons.${b.key}`)))
+                                    .map((opt) => (
+                                      <option key={opt.key} value={opt.key}>{t(`taskIcons.${opt.key}`)}</option>
+                                    ))}
                                 </select>
                               </div>
 

@@ -382,7 +382,7 @@ export function Settings({
     setEditingRewardCost('');
   };
 
-  const saveRewardEdit = async (r: { id: number }) => {
+  const saveRewardEdit = async (r: { id: number; isActive?: boolean }) => {
     const parsed = Math.max(1, Math.round(Number(editingRewardCost)));
     if (!Number.isFinite(parsed)) return;
     if (!editingRewardTitle.trim()) return;
@@ -390,7 +390,7 @@ export function Settings({
       title: editingRewardTitle.trim(),
       description: editingRewardDesc.trim() || '',
       costCoins: parsed,
-      isActive: true,
+      isActive: r.isActive !== false,
     });
     cancelRewardEdit();
     await loadRewardsAdmin();
