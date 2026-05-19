@@ -805,29 +805,33 @@ export function RoomDetail({ room, language, isAdmin, currentUserId, currentUser
                         >⋮</button>
                         {taskMenuOpen === task.id && (
                           <div
-                            style={{ position: 'absolute', right: 0, top: '100%', zIndex: 100, background: 'var(--warm-card)', border: '1.5px solid var(--warm-border)', borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,0.14)', minWidth: 160, overflow: 'hidden' }}
-                            onMouseLeave={() => { setTaskMenuOpen(null); setMoveMenuTaskId(null); }}
+                            style={{ position: 'absolute', right: 0, top: '100%', zIndex: 100, background: 'var(--warm-card)', border: '1.5px solid var(--warm-border)', borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,0.14)', minWidth: 180, overflow: 'hidden' }}
                           >
                             <button
                               onClick={() => handleDuplicateTask(task.id)}
                               style={{ width: '100%', textAlign: 'left', padding: '10px 14px', fontSize: 12, fontWeight: 700, color: 'var(--warm-text)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Nunito' }}
                             >{t('roomDetail.duplicateTask')}</button>
-                            <div style={{ position: 'relative' }}>
-                              <button
-                                onClick={() => setMoveMenuTaskId(moveMenuTaskId === task.id ? null : task.id)}
-                                style={{ width: '100%', textAlign: 'left', padding: '10px 14px', fontSize: 12, fontWeight: 700, color: 'var(--warm-text)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Nunito', borderTop: '1px solid var(--warm-border-subtle)' }}
-                              >{t('roomDetail.moveToRoom')} ›</button>
-                              {moveMenuTaskId === task.id && (
-                                <div style={{ position: 'absolute', right: '100%', top: 0, background: 'var(--warm-card)', border: '1.5px solid var(--warm-border)', borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,0.14)', minWidth: 160, overflow: 'hidden' }}>
-                                  {allRooms.filter(r => r.id !== room.id).map(r => (
-                                    <button key={r.id}
-                                      onClick={() => handleMoveTask(task.id, r.id)}
-                                      style={{ width: '100%', textAlign: 'left', padding: '10px 14px', fontSize: 12, fontWeight: 700, color: 'var(--warm-text)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Nunito', borderBottom: '1px solid var(--warm-border-subtle)' }}
-                                    >{r.name}</button>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
+                            <button
+                              onClick={() => setMoveMenuTaskId(moveMenuTaskId === task.id ? null : task.id)}
+                              style={{ width: '100%', textAlign: 'left', padding: '10px 14px', fontSize: 12, fontWeight: 700, color: 'var(--warm-text)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Nunito', borderTop: '1px solid var(--warm-border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                            >
+                              <span>{t('roomDetail.moveToRoom')}</span>
+                              <span style={{ fontSize: 10, opacity: 0.6 }}>{moveMenuTaskId === task.id ? '▲' : '▼'}</span>
+                            </button>
+                            {moveMenuTaskId === task.id && (
+                              <div style={{ borderTop: '1px solid var(--warm-border-subtle)', background: 'var(--warm-bg-subtle)' }}>
+                                {allRooms.filter(r => r.id !== room.id).map(r => (
+                                  <button key={r.id}
+                                    onClick={() => handleMoveTask(task.id, r.id)}
+                                    style={{ width: '100%', textAlign: 'left', padding: '8px 18px', fontSize: 12, fontWeight: 600, color: 'var(--warm-text)', background: 'none', border: 'none', borderBottom: '1px solid var(--warm-border-subtle)', cursor: 'pointer', fontFamily: 'Nunito' }}
+                                  >{roomDisplayName(r.name, r.roomType)}</button>
+                                ))}
+                              </div>
+                            )}
+                            <button
+                              onClick={() => { setTaskMenuOpen(null); setMoveMenuTaskId(null); }}
+                              style={{ width: '100%', textAlign: 'center', padding: '8px 14px', fontSize: 11, fontWeight: 600, color: 'var(--warm-text-muted)', background: 'none', border: 'none', borderTop: '1px solid var(--warm-border-subtle)', cursor: 'pointer', fontFamily: 'Nunito' }}
+                            >{t('common.cancel')}</button>
                           </div>
                         )}
                       </div>

@@ -318,7 +318,7 @@ export function RoomsList({ rooms, language, isAdmin, users, onSelectRoom, onCre
                       <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--warm-text)' }}>{roomDisplayName(room.name, room.roomType)}</div>
                       {isAdmin && (
                         <button
-                          onClick={(e) => { e.stopPropagation(); setRenamingRoom(room.id); setRenameValue(room.name); }}
+                          onClick={(e) => { e.stopPropagation(); setRenamingRoom(room.id); setRenameValue(roomDisplayName(room.name, room.roomType)); }}
                           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--warm-text-light)', fontSize: 12, padding: '2px 4px', lineHeight: 1 }}
                           title={t('rooms.renameRoom')}
                         >✏️</button>

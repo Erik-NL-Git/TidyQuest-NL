@@ -436,12 +436,12 @@ router.post('/tasks/:id/duplicate', (req: AuthRequest, res: Response) => {
 
   const result = db.prepare(
     `INSERT INTO tasks (roomId, name, notes, frequencyDays, effort, isSeasonal, lastCompletedAt, iconKey,
-      assignedToChildren, assignmentMode, onDemand, showInDashboard, customCoins, allowEarlyCompletion)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      assignedToChildren, assignmentMode, onDemand, showInDashboard, customCoins, allowEarlyCompletion, translationKey)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     task.roomId, task.name, task.notes, task.frequencyDays, task.effort, task.isSeasonal,
     null, task.iconKey, task.assignedToChildren, task.assignmentMode, task.onDemand,
-    task.showInDashboard, task.customCoins, task.allowEarlyCompletion
+    task.showInDashboard, task.customCoins, task.allowEarlyCompletion, task.translationKey
   );
   const newTaskId = result.lastInsertRowid as number;
 
