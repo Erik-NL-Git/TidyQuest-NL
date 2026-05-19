@@ -3,7 +3,7 @@ import db from '../database';
 import { AuthRequest, authMiddleware } from '../middleware/auth';
 import { calculateHealth, getCoinsForEffort } from '../utils/health';
 import { suggestTaskIcon } from '../utils/taskIcons';
-import { notifyAchievementUnlocksForUser } from '../utils/achievementNotifications';
+import { notifyAchievementUnlocksForUser, checkAndRecordNewAchievements } from '../utils/achievementNotifications';
 import { ensureAdmin, getCoinsByEffortConfig, getGlobalVacation, getUserVacation, resolveVacation, isStrictModeEnabled } from '../utils/adminHelpers';
 import { localDateStr } from '../utils/dateHelpers';
 
@@ -106,7 +106,6 @@ function applyApprovedCompletion(
         .run(newStreak, today, effectiveUserId);
     }
 
-    void notifyAchievementUnlocksForUser(effectiveUserId);
   }
 }
 
@@ -198,7 +197,7 @@ router.post('/rooms/:roomId/tasks', (req: AuthRequest, res: Response) => {
     return res.status(403).json({ error: 'Admin only' });
   }
 
-  const { name, notes, frequencyDays, effort, isSeasonal, health, iconKey, assignedToChildren, assignedUserIds, assignmentMode, assignedUserPercentages, onDemand, showInDashboard } = req.body;
+  const { name, notes, frequencyDays, effort, isSeasonal, health, iconKey, assignedToChildren, assignedUserIds, assignmentMode, assignedUserPercentages, onDemand, showInDashboard, customCoins, allowEarlyCompletion } = req.body;
   if (!name) return res.status(400).json({ error: 'name is required' });
 
   const room = db.prepare('SELECT id FROM rooms WHERE id = ?').get(req.params.roomId);
@@ -218,7 +217,7 @@ router.post('/rooms/:roomId/tasks', (req: AuthRequest, res: Response) => {
 
   // assignedUserIds and assignedToChildren are mutually exclusive
   const resolvedAssignedToChildren = (Array.isArray(assignedUserIds) && assignedUserIds.length > 0) ? 0 : (assignedToChildren ? 1 : 0);
-  const resolvedAssignmentMode = ['shared', 'custom'].includes(assignmentMode) ? assignmentMode : 'first';
+  const resolvedAssignmentMode = ['shared', 'custom', 'rotating'].includes(assignmentMode) ? assignmentMode : 'first';
 
   // Validate custom mode percentages sum to 100
   if (resolvedAssignmentMode === 'custom' && Array.isArray(assignedUserIds) && assignedUserIds.length > 0) {
@@ -226,9 +225,19 @@ router.post('/rooms/:roomId/tasks', (req: AuthRequest, res: Response) => {
     if (total !== 100) return res.status(400).json({ error: 'custom_percentages_must_sum_to_100' });
   }
 
+  const resolvedCustomCoins = (customCoins !== undefined && customCoins !== null && customCoins !== '')
+    ? Math.max(1, Math.round(Number(customCoins))) : null;
+
   const result = db.prepare(
-    'INSERT INTO tasks (roomId, name, notes, frequencyDays, effort, isSeasonal, lastCompletedAt, iconKey, assignedToChildren, assignmentMode, onDemand, showInDashboard) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-  ).run(req.params.roomId, name, notes || null, frequencyDays || 7, effort || 1, isSeasonal ? 1 : 0, lastCompletedAt, iconKey || suggestTaskIcon(name, null), resolvedAssignedToChildren, resolvedAssignmentMode, onDemand ? 1 : 0, showInDashboard ? 1 : 0);
+    `INSERT INTO tasks (roomId, name, notes, frequencyDays, effort, isSeasonal, lastCompletedAt, iconKey,
+      assignedToChildren, assignmentMode, onDemand, showInDashboard, customCoins, allowEarlyCompletion)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    req.params.roomId, name, notes || null, frequencyDays || 7, effort || 1, isSeasonal ? 1 : 0,
+    lastCompletedAt, iconKey || suggestTaskIcon(name, null), resolvedAssignedToChildren,
+    resolvedAssignmentMode, onDemand ? 1 : 0, showInDashboard ? 1 : 0,
+    resolvedCustomCoins, allowEarlyCompletion ? 1 : 0
+  );
 
   const newTaskId = result.lastInsertRowid as number;
 
@@ -238,6 +247,10 @@ router.post('/rooms/:roomId/tasks', (req: AuthRequest, res: Response) => {
     for (const uid of assignedUserIds) {
       const pct = (assignedUserPercentages && typeof assignedUserPercentages === 'object') ? (assignedUserPercentages[Number(uid)] ?? 0) : 0;
       insertAssignee.run(newTaskId, Number(uid), pct);
+    }
+    // Set initial rotation user for rotating mode
+    if (resolvedAssignmentMode === 'rotating') {
+      db.prepare('UPDATE tasks SET rotationCurrentUserId = ? WHERE id = ?').run(Number(assignedUserIds[0]), newTaskId);
     }
   }
 
@@ -258,7 +271,7 @@ router.put('/tasks/:id', (req: AuthRequest, res: Response) => {
     return res.status(403).json({ error: 'Admin only' });
   }
 
-  const { name, notes, frequencyDays, effort, isSeasonal, health, iconKey, assignedToChildren, assignedUserIds, assignmentMode, assignedUserPercentages, onDemand, showInDashboard } = req.body;
+  const { name, notes, frequencyDays, effort, isSeasonal, health, iconKey, assignedToChildren, assignedUserIds, assignmentMode, assignedUserPercentages, onDemand, showInDashboard, roomId, customCoins, allowEarlyCompletion } = req.body;
   const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id) as any;
   if (!task) return res.status(404).json({ error: 'Task not found' });
 
@@ -294,10 +307,20 @@ router.put('/tasks/:id', (req: AuthRequest, res: Response) => {
   if (lastCompletedAt !== undefined) { setClauses.push('lastCompletedAt = COALESCE(?, lastCompletedAt)'); params.push(lastCompletedAt); }
   if (iconKey !== undefined) { setClauses.push('iconKey = COALESCE(?, iconKey)'); params.push(iconKey); }
   if (resolvedAssignedToChildren !== undefined) { setClauses.push('assignedToChildren = ?'); params.push(resolvedAssignedToChildren); }
-  const resolvedMode = assignmentMode !== undefined ? (['shared', 'custom'].includes(assignmentMode) ? assignmentMode : 'first') : undefined;
+  const resolvedMode = assignmentMode !== undefined ? (['shared', 'custom', 'rotating'].includes(assignmentMode) ? assignmentMode : 'first') : undefined;
   if (resolvedMode !== undefined) { setClauses.push('assignmentMode = ?'); params.push(resolvedMode); }
   if (onDemand !== undefined) { setClauses.push('onDemand = ?'); params.push(onDemand ? 1 : 0); }
   if (showInDashboard !== undefined) { setClauses.push('showInDashboard = ?'); params.push(showInDashboard ? 1 : 0); }
+  if (roomId !== undefined) {
+    const targetRoom = db.prepare('SELECT id FROM rooms WHERE id = ?').get(roomId);
+    if (!targetRoom) return res.status(404).json({ error: 'Target room not found' });
+    setClauses.push('roomId = ?'); params.push(Number(roomId));
+  }
+  if (customCoins !== undefined) {
+    const resolved = (customCoins !== null && customCoins !== '') ? Math.max(1, Math.round(Number(customCoins))) : null;
+    setClauses.push('customCoins = ?'); params.push(resolved);
+  }
+  if (allowEarlyCompletion !== undefined) { setClauses.push('allowEarlyCompletion = ?'); params.push(allowEarlyCompletion ? 1 : 0); }
 
   // Validate custom mode percentages sum to 100
   if (resolvedMode === 'custom' && Array.isArray(assignedUserIds) && assignedUserIds.length > 0) {
@@ -321,6 +344,14 @@ router.put('/tasks/:id', (req: AuthRequest, res: Response) => {
       }
       // Clear assignedToChildren when specific users are set
       db.prepare('UPDATE tasks SET assignedToChildren = 0 WHERE id = ?').run(req.params.id);
+      // (Re-)set rotation start user when switching to rotating mode
+      const effectiveMode = resolvedMode ?? task.assignmentMode;
+      if (effectiveMode === 'rotating') {
+        db.prepare('UPDATE tasks SET rotationCurrentUserId = ? WHERE id = ?').run(Number(assignedUserIds[0]), req.params.id);
+      }
+    } else {
+      // Cleared all assignees — clear rotation too
+      db.prepare('UPDATE tasks SET rotationCurrentUserId = NULL WHERE id = ?').run(req.params.id);
     }
   }
 
@@ -339,6 +370,93 @@ router.delete('/tasks/:id', (req: AuthRequest, res: Response) => {
 
   db.prepare('DELETE FROM tasks WHERE id = ?').run(req.params.id);
   res.json({ success: true });
+});
+
+// Get all overdue tasks (health <= 0, non-seasonal, non-onDemand)
+router.get('/tasks/overdue', (req: AuthRequest, res: Response) => {
+  const globalVac = getGlobalVacation();
+
+  const tasks = db.prepare(`
+    SELECT t.id, t.name, t.roomId, t.effort, t.frequencyDays, t.lastCompletedAt, t.isSeasonal, t.onDemand,
+           r.name as roomName
+    FROM tasks t
+    JOIN rooms r ON t.roomId = r.id
+    WHERE t.isSeasonal = 0 AND t.onDemand = 0
+  `).all() as any[];
+
+  const allUsers = db.prepare('SELECT id, displayName, avatarColor, avatarType, avatarPreset, avatarPhotoUrl FROM users').all() as any[];
+  const usersById = new Map(allUsers.map((u: any) => [u.id, u]));
+
+  const taskIds = tasks.map((t: any) => t.id);
+  const taskAssigneeRows = taskIds.length > 0
+    ? db.prepare(`SELECT taskId, userId FROM task_assignees WHERE taskId IN (${taskIds.map(() => '?').join(',')})`).all(...taskIds) as { taskId: number; userId: number }[]
+    : [];
+  const assigneesByTask = new Map<number, number[]>();
+  for (const a of taskAssigneeRows) {
+    if (!assigneesByTask.has(a.taskId)) assigneesByTask.set(a.taskId, []);
+    assigneesByTask.get(a.taskId)!.push(a.userId);
+  }
+
+  const overdueTasks = tasks
+    .map((t: any) => {
+      const assigneeIds = assigneesByTask.get(t.id) || [];
+      const taskVac = assigneeIds.length === 1
+        ? resolveVacation(globalVac, getUserVacation(assigneeIds[0]))
+        : globalVac;
+      const health = calculateHealth(t.lastCompletedAt, t.frequencyDays, taskVac.isVacation, taskVac.startDate);
+      if (health > 0) return null;
+      const daysOverdue = t.lastCompletedAt
+        ? Math.max(0, (Date.now() - new Date(t.lastCompletedAt).getTime()) / 86400000 - t.frequencyDays)
+        : 999;
+      return {
+        id: t.id,
+        name: t.name,
+        roomId: t.roomId,
+        roomName: t.roomName,
+        effort: t.effort,
+        frequencyDays: t.frequencyDays,
+        lastCompletedAt: t.lastCompletedAt,
+        health,
+        daysOverdue: Math.round(daysOverdue * 10) / 10,
+        assignedUsers: assigneeIds.map((uid: number) => usersById.get(uid)).filter(Boolean),
+      };
+    })
+    .filter(Boolean)
+    .sort((a: any, b: any) => a.health - b.health);
+
+  res.json(overdueTasks);
+});
+
+// Duplicate a task (admin only)
+router.post('/tasks/:id/duplicate', (req: AuthRequest, res: Response) => {
+  if (!ensureAdmin(req.userId)) return res.status(403).json({ error: 'Admin only' });
+
+  const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id) as any;
+  if (!task) return res.status(404).json({ error: 'Task not found' });
+
+  const result = db.prepare(
+    `INSERT INTO tasks (roomId, name, notes, frequencyDays, effort, isSeasonal, lastCompletedAt, iconKey,
+      assignedToChildren, assignmentMode, onDemand, showInDashboard, customCoins, allowEarlyCompletion)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    task.roomId, task.name, task.notes, task.frequencyDays, task.effort, task.isSeasonal,
+    null, task.iconKey, task.assignedToChildren, task.assignmentMode, task.onDemand,
+    task.showInDashboard, task.customCoins, task.allowEarlyCompletion
+  );
+  const newTaskId = result.lastInsertRowid as number;
+
+  const assignees = db.prepare('SELECT userId, coinPercentage FROM task_assignees WHERE taskId = ?').all(task.id) as { userId: number; coinPercentage: number }[];
+  for (const a of assignees) {
+    db.prepare('INSERT OR IGNORE INTO task_assignees (taskId, userId, coinPercentage) VALUES (?, ?, ?)').run(newTaskId, a.userId, a.coinPercentage);
+  }
+
+  // Set initial rotation user for rotating mode
+  if (task.assignmentMode === 'rotating' && assignees.length > 0) {
+    db.prepare('UPDATE tasks SET rotationCurrentUserId = ? WHERE id = ?').run(assignees[0].userId, newTaskId);
+  }
+
+  const newTask = db.prepare('SELECT * FROM tasks WHERE id = ?').get(newTaskId);
+  res.status(201).json(newTask);
 });
 
 // Reset task to dirty - admin only
@@ -416,6 +534,14 @@ router.post('/tasks/:id/complete', (req: AuthRequest, res: Response) => {
   // If task.assignedToChildren and no room/task-user assignment: all children allowed (no additional restriction needed)
   // If no assignment: everyone allowed
 
+  // Rotating mode: only the current rotation user can complete (admins/members bypass)
+  if (task.assignmentMode === 'rotating' && !isAdminOrMember) {
+    const rotationUserId = task.rotationCurrentUserId;
+    if (rotationUserId && req.userId !== rotationUserId) {
+      return res.status(409).json({ error: 'not_your_turn' });
+    }
+  }
+
   // Always use server timestamp — never trust client-supplied completedAt
   const now = new Date().toISOString();
 
@@ -447,7 +573,17 @@ router.post('/tasks/:id/complete', (req: AuthRequest, res: Response) => {
         : globalVac;
       const currentHealth = calculateHealth(task.lastCompletedAt, task.frequencyDays, taskVac.isVacation, taskVac.startDate);
       if (currentHealth > 0) {
-        return res.status(409).json({ error: 'not_yet_due', health: currentHealth });
+        // allowEarlyCompletion: bypass cooldown if completed on a previous calendar day
+        if (task.allowEarlyCompletion) {
+          const lastDay = localDateStr(new Date(task.lastCompletedAt));
+          const today = localDateStr();
+          if (lastDay >= today) {
+            return res.status(409).json({ error: 'not_yet_due', health: currentHealth });
+          }
+          // Different calendar day — allow despite health > 0
+        } else {
+          return res.status(409).json({ error: 'not_yet_due', health: currentHealth });
+        }
       }
     }
   }
@@ -463,14 +599,16 @@ router.post('/tasks/:id/complete', (req: AuthRequest, res: Response) => {
   if (!gamificationOn) {
     coins = 0;
   } else {
-    const totalCoins = getCoinsForEffort(task.effort, getCoinsByEffortConfig());
+    const baseCoins = (task.customCoins != null && task.customCoins > 0)
+      ? task.customCoins
+      : getCoinsForEffort(task.effort, getCoinsByEffortConfig());
     if (task.assignmentMode === 'shared' && taskAssignees.length > 1) {
-      coins = Math.floor(totalCoins / taskAssignees.length);
+      coins = Math.floor(baseCoins / taskAssignees.length);
     } else if (task.assignmentMode === 'custom') {
       const row = taskAssignees.find(a => a.userId === effectiveUserId);
-      coins = Math.floor(totalCoins * (row?.coinPercentage ?? 0) / 100);
+      coins = Math.floor(baseCoins * (row?.coinPercentage ?? 0) / 100);
     } else {
-      coins = totalCoins;
+      coins = baseCoins;
     }
   }
 
@@ -485,7 +623,22 @@ router.post('/tasks/:id/complete', (req: AuthRequest, res: Response) => {
   }
 
   applyApprovedCompletion(task, task.id, effectiveUserId, coins, now, gamificationOn);
-  res.json({ coinsEarned: coins, health: 100, pendingApproval: false });
+
+  // Advance rotation to next assignee after successful completion
+  if (task.assignmentMode === 'rotating') {
+    const rotationAssignees = db.prepare('SELECT userId FROM task_assignees WHERE taskId = ? ORDER BY userId ASC').all(task.id) as { userId: number }[];
+    if (rotationAssignees.length > 1) {
+      const currentIdx = rotationAssignees.findIndex(a => a.userId === (task.rotationCurrentUserId ?? effectiveUserId));
+      const nextIdx = (currentIdx + 1) % rotationAssignees.length;
+      db.prepare('UPDATE tasks SET rotationCurrentUserId = ? WHERE id = ?').run(rotationAssignees[nextIdx].userId, task.id);
+    }
+  }
+
+  const newAchievements = gamificationOn ? checkAndRecordNewAchievements(effectiveUserId) : [];
+  if (newAchievements.length > 0) {
+    void notifyAchievementUnlocksForUser(effectiveUserId);
+  }
+  res.json({ coinsEarned: coins, health: 100, pendingApproval: false, newAchievements });
 });
 
 router.get('/completions/pending', (req: AuthRequest, res: Response) => {
@@ -534,6 +687,7 @@ router.post('/completions/:completionId/approve', (req: AuthRequest, res: Respon
     approvedByUserId: req.userId,
     approvedAt: new Date().toISOString(),
   });
+  if (gamifOnApprove) void notifyAchievementUnlocksForUser(completion.userId);
 
   res.json({ success: true });
 });

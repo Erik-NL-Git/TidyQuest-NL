@@ -59,18 +59,22 @@ export const api = {
 
   // Tasks
   getTasks: (roomId: number) => apiFetch<any[]>(`/rooms/${roomId}/tasks`),
-  createTask: (roomId: number, data: { name: string; notes?: string; frequencyDays?: number; effort?: number; isSeasonal?: boolean; health?: number; iconKey?: string; onDemand?: boolean; showInDashboard?: boolean; assignedToChildren?: boolean; assignedUserIds?: number[]; assignmentMode?: 'first' | 'shared' | 'custom'; assignedUserPercentages?: Record<number, number> }) =>
+  createTask: (roomId: number, data: { name: string; notes?: string; frequencyDays?: number; effort?: number; isSeasonal?: boolean; health?: number; iconKey?: string; onDemand?: boolean; showInDashboard?: boolean; assignedToChildren?: boolean; assignedUserIds?: number[]; assignmentMode?: 'first' | 'shared' | 'custom' | 'rotating'; assignedUserPercentages?: Record<number, number>; customCoins?: number | null; allowEarlyCompletion?: boolean }) =>
     apiFetch<any>(`/rooms/${roomId}/tasks`, { method: 'POST', body: JSON.stringify(data) }),
   updateTask: (id: number, data: any) =>
     apiFetch<any>(`/tasks/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteTask: (id: number) =>
     apiFetch<any>(`/tasks/${id}`, { method: 'DELETE' }),
+  duplicateTask: (id: number) =>
+    apiFetch<any>(`/tasks/${id}/duplicate`, { method: 'POST' }),
   resetTask: (id: number) =>
     apiFetch<{ success: boolean; completionsRemoved: number; coinsDeducted: number; lastCompletedAt: string }>(`/tasks/${id}/reset`, { method: 'POST' }),
   completeTask: (id: number, onBehalfOfUserId?: number) =>
-    apiFetch<{ coinsEarned: number; health: number; pendingApproval?: boolean }>(`/tasks/${id}/complete`, {
+    apiFetch<{ coinsEarned: number; health: number; pendingApproval?: boolean; newAchievements?: string[] }>(`/tasks/${id}/complete`, {
       method: 'POST', body: JSON.stringify(onBehalfOfUserId ? { onBehalfOfUserId } : {}),
     }),
+  getOverdueTasks: () =>
+    apiFetch<any[]>('/tasks/overdue'),
 
   // Leaderboard
   leaderboard: (period: 'week' | 'month' | 'quarter' | 'year') => apiFetch<any[]>(`/leaderboard?period=${period}`),

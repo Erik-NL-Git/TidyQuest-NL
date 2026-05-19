@@ -48,8 +48,8 @@ function syncPrimaryGoal(userId: number) {
 
   // Auto-complete any active goals where coins >= target
   const activeGoals = db.prepare(
-    `SELECT id, goalCoins, startAt, endAt, createdAt FROM user_goals WHERE userId = ? AND status = 'active'`
-  ).all(userId) as { id: number; goalCoins: number; startAt: string | null; endAt: string | null; createdAt: string }[];
+    `SELECT id, goalCoins, rewardCoins, startAt, endAt, createdAt FROM user_goals WHERE userId = ? AND status = 'active'`
+  ).all(userId) as { id: number; goalCoins: number; rewardCoins: number; startAt: string | null; endAt: string | null; createdAt: string }[];
   for (const g of activeGoals) {
     // Use startAt if set, otherwise fall back to createdAt so that goals without an
     // explicit start date only count coins earned after the goal was created — prevents
@@ -61,6 +61,10 @@ function syncPrimaryGoal(userId: number) {
     ).get(userId, from, to) as { total: number };
     if (row.total >= g.goalCoins) {
       db.prepare("UPDATE user_goals SET status = 'completed', completedAt = ? WHERE id = ?").run(nowIso, g.id);
+      // Award bonus coins if configured
+      if (g.rewardCoins > 0) {
+        db.prepare('UPDATE users SET coins = coins + ? WHERE id = ?').run(g.rewardCoins, userId);
+      }
     }
   }
 
@@ -450,7 +454,7 @@ router.post('/:id/goals', (req: AuthRequest, res: Response) => {
   if (!target) return res.status(404).json({ error: 'User not found' });
   if (target.role === 'admin' && !target.isParticipant) return res.status(400).json({ error: 'Cannot assign goals to a non-participating admin' });
 
-  const { title, goalCoins, startAt, endAt } = req.body as { title?: string; goalCoins?: number; startAt?: string | null; endAt?: string | null };
+  const { title, goalCoins, startAt, endAt, rewardCoins } = req.body as { title?: string; goalCoins?: number; startAt?: string | null; endAt?: string | null; rewardCoins?: number };
   const cleanTitle = String(title || '').trim();
   if (!cleanTitle) return res.status(400).json({ error: 'title is required' });
   const n = Math.round(Number(goalCoins));
@@ -462,14 +466,16 @@ router.post('/:id/goals', (req: AuthRequest, res: Response) => {
   if (normStart && normEnd && new Date(normEnd).getTime() < new Date(normStart).getTime()) {
     return res.status(400).json({ error: 'endAt must be after startAt' });
   }
+  const normRewardCoins = (rewardCoins !== undefined && rewardCoins !== null)
+    ? Math.max(0, Math.round(Number(rewardCoins))) : 0;
 
   const result = db.prepare(
-    'INSERT INTO user_goals (userId, title, goalCoins, startAt, endAt, createdBy) VALUES (?, ?, ?, ?, ?, ?)'
-  ).run(targetId, cleanTitle, n, normStart, normEnd, req.userId);
+    'INSERT INTO user_goals (userId, title, goalCoins, startAt, endAt, rewardCoins, createdBy) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  ).run(targetId, cleanTitle, n, normStart, normEnd, normRewardCoins, req.userId);
 
   syncPrimaryGoal(targetId);
   const created = db.prepare(
-    'SELECT id, userId, title, goalCoins, startAt, endAt, status, completedAt, createdBy, createdAt FROM user_goals WHERE id = ?'
+    'SELECT id, userId, title, goalCoins, startAt, endAt, rewardCoins, status, completedAt, createdBy, createdAt FROM user_goals WHERE id = ?'
   ).get(result.lastInsertRowid);
   res.status(201).json(created);
 });

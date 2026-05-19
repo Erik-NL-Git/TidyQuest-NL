@@ -104,7 +104,10 @@ interface Task {
   assignedUsers?: Array<{ id: number; displayName: string; avatarColor: string; avatarType?: string; avatarPreset?: string; avatarPhotoUrl?: string; coinPercentage?: number }>;
   effectiveAssignedUserIds?: number[];
   completedTodayBy?: CompletedTodayBy | null;
-  assignmentMode?: 'first' | 'shared' | 'custom';
+  assignmentMode?: 'first' | 'shared' | 'custom' | 'rotating';
+  rotationCurrentUserId?: number | null;
+  customCoins?: number | null;
+  allowEarlyCompletion?: boolean;
   sharedCompletions?: Array<{ userId: number; displayName: string; completionId: number }>;
 }
 
@@ -123,6 +126,7 @@ interface RoomDetailProps {
   onCompleteTask: (taskId: number) => void;
   onBack: () => void;
   onRefresh?: () => void;
+  onAchievementsUnlocked?: (ids: string[]) => void;
 }
 
 function FrequencyPicker({ value, unit, onChange, t }: {
@@ -168,11 +172,14 @@ function EffortPicker({ effort, onChange }: { effort: number; onChange: (e: numb
   );
 }
 
-export function RoomDetail({ room, language, isAdmin, currentUserId, currentUserRole, users, coinsByEffort, onCompleteTask, onBack, onRefresh }: RoomDetailProps) {
+export function RoomDetail({ room, language, isAdmin, currentUserId, currentUserRole, users, coinsByEffort, onCompleteTask, onBack, onRefresh, onAchievementsUnlocked }: RoomDetailProps) {
   const { taskName: translateTask, roomDisplayName, timeAgo, t } = useTranslation(language);
   const [animatedTask, setAnimatedTask] = useState<number | null>(null);
   const [editingTask, setEditingTask] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', notes: '', freqValue: 7, freqUnit: 'days', effort: 1, health: 100, healthChanged: false, iconKey: 'sparkle', onDemand: false, showInDashboard: false, assignmentType: 'none' as 'none' | 'users', assignmentUserIds: [] as number[], assignmentMode: 'first' as 'first' | 'shared' | 'custom', assignmentPercentages: {} as Record<number, number> });
+  const [editForm, setEditForm] = useState({ name: '', notes: '', freqValue: 7, freqUnit: 'days', effort: 1, health: 100, healthChanged: false, iconKey: 'sparkle', onDemand: false, showInDashboard: false, assignmentType: 'none' as 'none' | 'users', assignmentUserIds: [] as number[], assignmentMode: 'first' as 'first' | 'shared' | 'custom' | 'rotating', assignmentPercentages: {} as Record<number, number>, customCoins: '' as string | number, allowEarlyCompletion: false });
+  const [taskMenuOpen, setTaskMenuOpen] = useState<number | null>(null);
+  const [moveMenuTaskId, setMoveMenuTaskId] = useState<number | null>(null);
+  const [allRooms, setAllRooms] = useState<Array<{ id: number; name: string; roomType: string }>>([]);
   const [showAddTask, setShowAddTask] = useState(false);
   const [newTaskName, setNewTaskName] = useState('');
   const [newTaskNotes, setNewTaskNotes] = useState('');
@@ -249,9 +256,12 @@ export function RoomDetail({ room, language, isAdmin, currentUserId, currentUser
   const handleAdminModalConfirm = async (userIds: number[]) => {
     if (!adminModalTask) return;
     try {
+      const allNewAchievements: string[] = [];
       for (const uid of userIds) {
-        await api.completeTask(adminModalTask.id, uid);
+        const result = await api.completeTask(adminModalTask.id, uid);
+        if (result.newAchievements?.length) allNewAchievements.push(...result.newAchievements);
       }
+      if (allNewAchievements.length > 0) onAchievementsUnlocked?.(allNewAchievements);
     } catch (e) {
       console.error('Failed to complete task for some users:', e);
     }
@@ -271,7 +281,7 @@ export function RoomDetail({ room, language, isAdmin, currentUserId, currentUser
       assignmentPercentages[u.id] = u.coinPercentage ?? 0;
     }
     setEditingTask(task.id);
-    setEditForm({ name: task.name, notes: task.notes || '', freqValue: value, freqUnit: unit, effort: task.effort, health: task.health, healthChanged: false, iconKey: task.iconKey || 'sparkle', onDemand: !!task.onDemand, showInDashboard: !!task.showInDashboard, assignmentType, assignmentUserIds, assignmentMode: task.assignmentMode || 'first', assignmentPercentages });
+    setEditForm({ name: task.name, notes: task.notes || '', freqValue: value, freqUnit: unit, effort: task.effort, health: task.health, healthChanged: false, iconKey: task.iconKey || 'sparkle', onDemand: !!task.onDemand, showInDashboard: !!task.showInDashboard, assignmentType, assignmentUserIds, assignmentMode: (task.assignmentMode || 'first') as 'first' | 'shared' | 'custom' | 'rotating', assignmentPercentages, customCoins: task.customCoins ?? '', allowEarlyCompletion: !!task.allowEarlyCompletion });
   };
 
   const saveEdit = async () => {
@@ -281,7 +291,7 @@ export function RoomDetail({ room, language, isAdmin, currentUserId, currentUser
       editForm.assignmentType === 'users' ? { assignedToChildren: false, assignedUserIds: editForm.assignmentUserIds } :
       { assignedToChildren: false, assignedUserIds: [] };
     const assignedUserPercentages = editForm.assignmentMode === 'custom' ? editForm.assignmentPercentages : undefined;
-    await api.updateTask(editingTask, { name: editForm.name, notes: editForm.notes, frequencyDays, effort: editForm.effort, ...(editForm.healthChanged ? { health: editForm.health } : {}), iconKey: editForm.iconKey, onDemand: editForm.onDemand, showInDashboard: editForm.showInDashboard, assignmentMode: editForm.assignmentMode, assignedUserPercentages, ...assignmentPayload });
+    await api.updateTask(editingTask, { name: editForm.name, notes: editForm.notes, frequencyDays, effort: editForm.effort, ...(editForm.healthChanged ? { health: editForm.health } : {}), iconKey: editForm.iconKey, onDemand: editForm.onDemand, showInDashboard: editForm.showInDashboard, assignmentMode: editForm.assignmentMode, assignedUserPercentages, customCoins: editForm.customCoins !== '' ? Number(editForm.customCoins) : null, allowEarlyCompletion: editForm.allowEarlyCompletion, ...assignmentPayload });
     setEditingTask(null);
     onRefresh?.();
   };
@@ -294,6 +304,14 @@ export function RoomDetail({ room, language, isAdmin, currentUserId, currentUser
         if (!effectiveIds.includes(currentUserId)) {
           return { disabled: true, label: t('app.notAssigned') };
         }
+      }
+    }
+
+    // Rotating mode: disabled if it's not the current user's turn
+    if (task.assignmentMode === 'rotating' && task.rotationCurrentUserId !== undefined) {
+      if (currentUserId !== undefined && task.rotationCurrentUserId !== currentUserId) {
+        const turnUser = task.assignedUsers?.find(u => u.id === task.rotationCurrentUserId);
+        return { disabled: true, label: t('roomDetail.waitingForTurn').replace('{name}', turnUser?.displayName || '?') };
       }
     }
 
@@ -333,6 +351,27 @@ export function RoomDetail({ room, language, isAdmin, currentUserId, currentUser
     await api.deleteTask(taskId);
     setEditingTask(null);
     onRefresh?.();
+  };
+
+  const handleDuplicateTask = async (taskId: number) => {
+    setTaskMenuOpen(null);
+    await api.duplicateTask(taskId);
+    onRefresh?.();
+  };
+
+  const handleMoveTask = async (taskId: number, targetRoomId: number) => {
+    setMoveMenuTaskId(null);
+    setTaskMenuOpen(null);
+    await api.updateTask(taskId, { roomId: targetRoomId });
+    onRefresh?.();
+  };
+
+  const handleTaskMenuOpen = async (taskId: number) => {
+    setTaskMenuOpen(taskId);
+    if (allRooms.length === 0) {
+      const rooms = await api.getRooms();
+      setAllRooms(rooms);
+    }
   };
 
   const addTask = async () => {
@@ -470,6 +509,25 @@ export function RoomDetail({ room, language, isAdmin, currentUserId, currentUser
                       <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--warm-text-light)' }}>{t('roomDetail.effort')}</label>
                       <EffortPicker effort={editForm.effort} onChange={(e) => setEditForm(f => ({ ...f, effort: e }))} />
                     </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--warm-text-light)' }}>{t('roomDetail.allowEarlyCompletion')}</label>
+                      <input type="checkbox" checked={editForm.allowEarlyCompletion}
+                        onChange={(e) => setEditForm(f => ({ ...f, allowEarlyCompletion: e.target.checked }))}
+                        style={{ cursor: 'pointer', width: 16, height: 16, accentColor: 'var(--warm-accent)' }} />
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--warm-text-light)', minWidth: 70 }}>{t('roomDetail.customCoins')}</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={editForm.customCoins}
+                      onChange={(e) => setEditForm(f => ({ ...f, customCoins: e.target.value === '' ? '' : Math.max(1, parseInt(e.target.value) || 1) }))}
+                      placeholder={t('roomDetail.customCoinsPlaceholder')}
+                      className="tq-input-compact"
+                      style={{ width: 80 }}
+                    />
+                    <span style={{ fontSize: 11, color: 'var(--warm-text-light)' }}>{t('roomDetail.customCoinsDesc')}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--warm-text-light)', minWidth: 58 }}>{t('rooms.health')}</label>
@@ -563,7 +621,7 @@ export function RoomDetail({ room, language, isAdmin, currentUserId, currentUser
                               <div style={{ marginLeft: 70, display: 'flex', gap: 8, alignItems: 'center', marginTop: 4 }}>
                                 <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--warm-text-light)', minWidth: 58 }}>Mode</label>
                                 <div style={{ display: 'flex', gap: 6 }}>
-                                  {(['first', 'shared', 'custom'] as const).map(mode => (
+                                  {(['first', 'shared', 'custom', 'rotating'] as const).map(mode => (
                                     <button
                                       key={mode}
                                       onClick={() => {
@@ -578,7 +636,7 @@ export function RoomDetail({ room, language, isAdmin, currentUserId, currentUser
                                         cursor: 'pointer', fontFamily: 'Nunito',
                                       }}
                                     >
-                                      {mode === 'first' ? t('rooms.modeFirst') : mode === 'shared' ? t('rooms.modeShared') : t('rooms.modeCustom')}
+                                      {mode === 'first' ? t('rooms.modeFirst') : mode === 'shared' ? t('rooms.modeShared') : mode === 'custom' ? t('rooms.modeCustom') : t('roomDetail.rotating')}
                                     </button>
                                   ))}
                                 </div>
@@ -705,6 +763,11 @@ export function RoomDetail({ room, language, isAdmin, currentUserId, currentUser
                             {task.assignmentMode === 'shared' ? t('rooms.modeShared') : t('rooms.modeCustom')} · {task.sharedCompletions?.length || 0}/{task.assignedUsers.length} {t('rooms.done')}
                           </div>
                         )}
+                        {task.assignmentMode === 'rotating' && task.rotationCurrentUserId !== undefined && (
+                          <div style={{ fontSize: 10, color: 'var(--warm-accent)', fontWeight: 700, marginTop: 2 }}>
+                            🔄 {task.assignedUsers.find(u => u.id === task.rotationCurrentUserId)?.displayName || '?'}
+                          </div>
+                        )}
                       </span>
                     : room.assignedUserId
                       ? (() => {
@@ -716,7 +779,7 @@ export function RoomDetail({ room, language, isAdmin, currentUserId, currentUser
                       : <span style={{ color: 'var(--warm-text-light)', opacity: 0.5 }}>—</span>
                   }
                 </div>
-                <div className="room-task-actions" style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+                <div className="room-task-actions" style={{ display: 'flex', gap: 4, justifyContent: 'flex-end', position: 'relative' }}>
                   {isAdmin && (
                     <>
                       <button onClick={() => startEdit(task)}
@@ -733,6 +796,41 @@ export function RoomDetail({ room, language, isAdmin, currentUserId, currentUser
                           fontWeight: 700, color: 'var(--warm-danger)',
                           cursor: 'pointer', fontFamily: 'Nunito',
                         }}>&times;</button>
+                      <div style={{ position: 'relative' }}>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); if (taskMenuOpen === task.id) { setTaskMenuOpen(null); setMoveMenuTaskId(null); } else { handleTaskMenuOpen(task.id); setMoveMenuTaskId(null); } }}
+                          className="tq-btn-sm"
+                          style={{ background: 'none', border: '1.5px solid var(--warm-border)', borderRadius: 10, fontWeight: 700, color: 'var(--warm-text-muted)', cursor: 'pointer', fontFamily: 'Nunito', padding: '2px 7px', fontSize: 16 }}
+                          title="More options"
+                        >⋮</button>
+                        {taskMenuOpen === task.id && (
+                          <div
+                            style={{ position: 'absolute', right: 0, top: '100%', zIndex: 100, background: 'var(--warm-card)', border: '1.5px solid var(--warm-border)', borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,0.14)', minWidth: 160, overflow: 'hidden' }}
+                            onMouseLeave={() => { setTaskMenuOpen(null); setMoveMenuTaskId(null); }}
+                          >
+                            <button
+                              onClick={() => handleDuplicateTask(task.id)}
+                              style={{ width: '100%', textAlign: 'left', padding: '10px 14px', fontSize: 12, fontWeight: 700, color: 'var(--warm-text)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Nunito' }}
+                            >{t('roomDetail.duplicateTask')}</button>
+                            <div style={{ position: 'relative' }}>
+                              <button
+                                onClick={() => setMoveMenuTaskId(moveMenuTaskId === task.id ? null : task.id)}
+                                style={{ width: '100%', textAlign: 'left', padding: '10px 14px', fontSize: 12, fontWeight: 700, color: 'var(--warm-text)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Nunito', borderTop: '1px solid var(--warm-border-subtle)' }}
+                              >{t('roomDetail.moveToRoom')} ›</button>
+                              {moveMenuTaskId === task.id && (
+                                <div style={{ position: 'absolute', right: '100%', top: 0, background: 'var(--warm-card)', border: '1.5px solid var(--warm-border)', borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,0.14)', minWidth: 160, overflow: 'hidden' }}>
+                                  {allRooms.filter(r => r.id !== room.id).map(r => (
+                                    <button key={r.id}
+                                      onClick={() => handleMoveTask(task.id, r.id)}
+                                      style={{ width: '100%', textAlign: 'left', padding: '10px 14px', fontSize: 12, fontWeight: 700, color: 'var(--warm-text)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Nunito', borderBottom: '1px solid var(--warm-border-subtle)' }}
+                                    >{r.name}</button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </>
                   )}
                   {isAdmin && task.completedTodayBy?.completionId && (

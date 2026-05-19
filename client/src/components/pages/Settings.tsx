@@ -102,8 +102,8 @@ export function Settings({
   const [memberEditOpen, setMemberEditOpen] = useState<Record<number, boolean>>({});
   const [memberPassword, setMemberPassword] = useState<Record<number, string>>({});
   const [memberPasswordMsg, setMemberPasswordMsg] = useState<Record<number, string>>({});
-  const [memberGoals, setMemberGoals] = useState<Record<number, Array<{ id: number; title: string; goalCoins: number; startAt?: string | null; endAt?: string | null }>>>({});
-  const [goalDraft, setGoalDraft] = useState<Record<number, { title: string; goalCoins: string; endAt: string }>>({});
+  const [memberGoals, setMemberGoals] = useState<Record<number, Array<{ id: number; title: string; goalCoins: number; rewardCoins?: number; startAt?: string | null; endAt?: string | null }>>>({});
+  const [goalDraft, setGoalDraft] = useState<Record<number, { title: string; goalCoins: string; rewardCoins: string; endAt: string }>>({});
   const [rewardsAdmin, setRewardsAdmin] = useState<Array<{ id: number; title: string; description?: string | null; costCoins: number; isActive?: boolean; isPreset?: boolean }>>([]);
   const [rewardRequests, setRewardRequests] = useState<Array<{ id: number; title: string; displayName: string; costCoins: number; redeemedAt: string; status: string }>>([]);
   const [rewardDraft, setRewardDraft] = useState({ title: '', description: '', costCoins: '30' });
@@ -313,16 +313,18 @@ export function Settings({
   };
 
   const handleAddGoal = async (u: FamilyUser) => {
-    const d = goalDraft[u.id] || { title: '', goalCoins: '', endAt: '' };
+    const d = goalDraft[u.id] || { title: '', goalCoins: '', rewardCoins: '', endAt: '' };
     if (!d.title.trim() || !d.goalCoins.trim()) return;
     const goalCoins = Math.max(1, Math.round(Number(d.goalCoins)));
+    const rewardCoins = Number(d.rewardCoins) || 0;
     await api.createUserGoal(u.id, {
       title: d.title.trim(),
       goalCoins,
+      rewardCoins,
       startAt: null,
       endAt: d.endAt ? `${d.endAt}T23:59:59.999Z` : null,
-    });
-    setGoalDraft((prev) => ({ ...prev, [u.id]: { title: '', goalCoins: '', endAt: '' } }));
+    } as any);
+    setGoalDraft((prev) => ({ ...prev, [u.id]: { title: '', goalCoins: '', rewardCoins: '', endAt: '' } }));
     await loadAdminGoals();
   };
 
@@ -870,11 +872,11 @@ export function Settings({
                   {memberGoalMsg[u.id] && (
                     <div style={{ fontSize: 11, color: 'var(--warm-text-light)', fontWeight: 700 }}>{memberGoalMsg[u.id]}</div>
                   )}
-                  <div className="goal-member-form" style={{ display: 'grid', gridTemplateColumns: '1.4fr 100px 130px auto', gap: 8 }}>
+                  <div className="goal-member-form" style={{ display: 'grid', gridTemplateColumns: '1.4fr 100px 90px 130px auto', gap: 8 }}>
                     <input
                       className="tq-input"
                       value={goalDraft[u.id]?.title || ''}
-                      onChange={(e) => setGoalDraft((prev) => ({ ...prev, [u.id]: { ...(prev[u.id] || { title: '', goalCoins: '', endAt: '' }), title: e.target.value } }))}
+                      onChange={(e) => setGoalDraft((prev) => ({ ...prev, [u.id]: { ...(prev[u.id] || { title: '', goalCoins: '', rewardCoins: '', endAt: '' }), title: e.target.value } }))}
                       placeholder={t('settings.goalTitle')}
                     />
                     <input
@@ -882,14 +884,23 @@ export function Settings({
                       className="tq-input"
                       min={1}
                       value={goalDraft[u.id]?.goalCoins || ''}
-                      onChange={(e) => setGoalDraft((prev) => ({ ...prev, [u.id]: { ...(prev[u.id] || { title: '', goalCoins: '', endAt: '' }), goalCoins: e.target.value } }))}
+                      onChange={(e) => setGoalDraft((prev) => ({ ...prev, [u.id]: { ...(prev[u.id] || { title: '', goalCoins: '', rewardCoins: '', endAt: '' }), goalCoins: e.target.value } }))}
                       placeholder={t('settings.goalCoins')}
+                    />
+                    <input
+                      type="number"
+                      className="tq-input"
+                      min={0}
+                      value={goalDraft[u.id]?.rewardCoins || ''}
+                      onChange={(e) => setGoalDraft((prev) => ({ ...prev, [u.id]: { ...(prev[u.id] || { title: '', goalCoins: '', rewardCoins: '', endAt: '' }), rewardCoins: e.target.value } }))}
+                      placeholder={t('settings.goalReward')}
+                      title={t('settings.goalRewardDesc')}
                     />
                     <input
                       type="date"
                       className="tq-input goal-member-end-date"
                       value={goalDraft[u.id]?.endAt || ''}
-                      onChange={(e) => setGoalDraft((prev) => ({ ...prev, [u.id]: { ...(prev[u.id] || { title: '', goalCoins: '', endAt: '' }), endAt: e.target.value } }))}
+                      onChange={(e) => setGoalDraft((prev) => ({ ...prev, [u.id]: { ...(prev[u.id] || { title: '', goalCoins: '', rewardCoins: '', endAt: '' }), endAt: e.target.value } }))}
                       title={t('settings.goalEnd')}
                       lang={locale}
                       style={{ minWidth: 0 }}

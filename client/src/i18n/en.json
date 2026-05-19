@@ -216,6 +216,8 @@
       "deleteUserConfirm": "Delete \"{user}\"? This cannot be undone.",
       "goalCoins": "Goal coins",
       "goalTitle": "Goal title",
+      "goalReward": "Completion bonus",
+      "goalRewardDesc": "Bonus coins awarded when this goal is reached",
       "setGoal": "Set goal",
       "addGoal": "Add goal",
       "manageMember": "Manage member",
@@ -428,7 +430,21 @@
       "tomorrow": "Tomorrow",
       "inMinutes": "in {m}m",
       "inHours": "in {h}h",
-      "inHoursMinutes": "in {h}h {m}m"
+      "inHoursMinutes": "in {h}h {m}m",
+      "customCoins": "Custom coins",
+      "customCoinsDesc": "Leave empty to use effort-based default",
+      "customCoinsPlaceholder": "Auto",
+      "allowEarlyCompletion": "Allow early completion",
+      "allowEarlyCompletionDesc": "Can be re-done on any new calendar day",
+      "rotating": "Rotating",
+      "rotatingDesc": "Turn-based: each assignee completes in rotation",
+      "currentTurn": "Turn: {name}",
+      "yourTurn": "Your turn",
+      "waitingForTurn": "Waiting for {name}",
+      "duplicateTask": "Duplicate task",
+      "moveToRoom": "Move to room",
+      "taskDuplicated": "Task duplicated",
+      "taskMoved": "Task moved"
     },
     "avatars": {
       "cat": "Cat",
@@ -517,7 +533,8 @@
       "modeShared": "Shared",
       "modeCustom": "Custom",
       "totalPercentage": "Total: {total}%",
-      "done": "done"
+      "done": "done",
+      "renameRoom": "Rename room"
     },
     "common": {
       "save": "Save",
@@ -631,7 +648,13 @@
       "perfectMonth": "Perfect Month",
       "perfectMonthDesc": "Have 4 perfect weeks",
       "nightOwl": "Night Owl Planner",
-      "nightOwlDesc": "Reach a 60-day streak"
+      "nightOwlDesc": "Reach a 60-day streak",
+      "unlocked": "Achievement unlocked!",
+      "badge_bronze": "Bronze",
+      "badge_silver": "Silver",
+      "badge_gold": "Gold",
+      "badge_platinum": "Platinum",
+      "badge_legend": "Legend"
     },
     "taskIcons": {
       "sparkle": "Sparkle",

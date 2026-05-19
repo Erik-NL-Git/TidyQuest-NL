@@ -5,6 +5,7 @@ import { api } from './hooks/useApi';
 import { Sidebar } from './components/layout/Sidebar';
 import { PageHeader } from './components/layout/PageHeader';
 import { ConfettiEffect } from './components/shared/ConfettiEffect';
+import { AchievementUnlockToast } from './components/ui/AchievementUnlockToast';
 import Dashboard from './components/pages/Dashboard';
 import { RoomsList } from './components/pages/RoomsList';
 import { RoomDetail } from './components/pages/RoomDetail';
@@ -48,6 +49,7 @@ function AppContent() {
   const [gamificationEnabled, setGamificationEnabled] = useState(true);
   const [confetti, setConfetti] = useState(false);
   const [taskErrorMsg, setTaskErrorMsg] = useState<string | null>(null);
+  const [unlockedAchievements, setUnlockedAchievements] = useState<string[]>([]);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -188,6 +190,9 @@ function AppContent() {
         await refreshRooms();
         return;
       }
+      if (result.newAchievements && result.newAchievements.length > 0) {
+        setUnlockedAchievements(result.newAchievements);
+      }
       setConfetti(true);
       refreshUser();
       await Promise.all([refreshRooms(), loadDashboard()]);
@@ -289,6 +294,15 @@ function AppContent() {
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--warm-bg)' }}>
       <ConfettiEffect show={confetti} />
 
+      {/* Achievement unlock toast */}
+      {unlockedAchievements.length > 0 && (
+        <AchievementUnlockToast
+          achievementIds={unlockedAchievements}
+          onDismiss={() => setUnlockedAchievements([])}
+          language={user?.language}
+        />
+      )}
+
       {/* Task error toast */}
       {taskErrorMsg && (
         <div style={{
@@ -383,12 +397,16 @@ function AppContent() {
                   await api.updateRoom(roomId, { assignedUserId, ...(force ? { force: true } : {}) });
                   void refreshRooms();
                 }}
+                onRenameRoom={async (roomId, name) => {
+                  await api.updateRoom(roomId, { name });
+                  void refreshRooms();
+                }}
               />
             </>
           } />
 
           <Route path="/rooms/:id" element={
-            <RoomDetailWrapper rooms={rooms} user={user} users={familySettings} coinsByEffort={coinsByEffort} gamificationEnabled={gamificationEnabled} onCompleteTask={handleCompleteTask} onRefresh={() => { refreshRooms(); loadDashboard(); }} />
+            <RoomDetailWrapper rooms={rooms} user={user} users={familySettings} coinsByEffort={coinsByEffort} gamificationEnabled={gamificationEnabled} onCompleteTask={handleCompleteTask} onRefresh={() => { refreshRooms(); loadDashboard(); }} onAchievementsUnlocked={setUnlockedAchievements} />
           } />
 
           <Route path="/calendar" element={
@@ -536,7 +554,7 @@ function AppContent() {
   );
 }
 
-function RoomDetailWrapper({ rooms, user, users, coinsByEffort, gamificationEnabled, onCompleteTask, onRefresh }: { rooms: any[]; user: any; users?: any[]; coinsByEffort: Record<number, number>; gamificationEnabled: boolean; onCompleteTask: (id: number) => void; onRefresh: () => void }) {
+function RoomDetailWrapper({ rooms, user, users, coinsByEffort, gamificationEnabled, onCompleteTask, onRefresh, onAchievementsUnlocked }: { rooms: any[]; user: any; users?: any[]; coinsByEffort: Record<number, number>; gamificationEnabled: boolean; onCompleteTask: (id: number) => void; onRefresh: () => void; onAchievementsUnlocked?: (ids: string[]) => void }) {
   const navigate = useNavigate();
   const { t, roomDisplayName } = useTranslation(user?.language || 'en');
   const { id: idParam } = useParams<{ id: string }>();
@@ -558,7 +576,7 @@ function RoomDetailWrapper({ rooms, user, users, coinsByEffort, gamificationEnab
   return (
     <>
       <PageHeader title={roomDisplayName(room.name, room.roomType)} subtitle={`${room.tasks?.length || 0} ${t('rooms.tasksTracked')}`} user={user} onCoinsClick={() => navigate('/rewards')} onStreakClick={() => navigate('/achievements')} gamificationEnabled={gamificationEnabled} />
-      <RoomDetail room={room} language={user?.language} isAdmin={user?.role === 'admin'} currentUserId={user?.id} currentUserRole={user?.role} users={users} coinsByEffort={coinsByEffort} onCompleteTask={onCompleteTask} onBack={() => navigate('/rooms')} onRefresh={onRefresh} />
+      <RoomDetail room={room} language={user?.language} isAdmin={user?.role === 'admin'} currentUserId={user?.id} currentUserRole={user?.role} users={users} coinsByEffort={coinsByEffort} onCompleteTask={onCompleteTask} onBack={() => navigate('/rooms')} onRefresh={onRefresh} onAchievementsUnlocked={onAchievementsUnlocked} />
     </>
   );
 }

@@ -16,7 +16,7 @@ interface AdminCompleteModalProps {
   task: {
     id: number;
     name: string;
-    assignmentMode?: 'first' | 'shared' | 'custom';
+    assignmentMode?: 'first' | 'shared' | 'custom' | 'rotating';
     assignedUsers?: User[];
     assignedToChildren?: boolean;
     effectiveAssignedUserIds?: number[];

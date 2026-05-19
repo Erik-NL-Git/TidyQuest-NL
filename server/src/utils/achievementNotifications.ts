@@ -107,22 +107,41 @@ function getUserAchievementStats(userId: number) {
   };
 }
 
-export async function notifyAchievementUnlocksForUser(userId: number): Promise<void> {
+/**
+ * Synchronously checks which achievements are newly unlocked for a user,
+ * records them in user_achievement_notifications, and returns their IDs.
+ * Safe to call inline before sending a response.
+ */
+export function checkAndRecordNewAchievements(userId: number): string[] {
   const gamifRow = db.prepare("SELECT value FROM app_settings WHERE key = 'gamificationEnabled'").get() as { value: string } | undefined;
-  if (gamifRow && gamifRow.value === '0') return;
-  if (!isNotificationTypeEnabled('achievementUnlocked')) return;
+  if (gamifRow && gamifRow.value === '0') return [];
   const stats = getUserAchievementStats(userId);
-  if (!stats) return;
-
+  if (!stats) return [];
+  const newIds: string[] = [];
   for (const ach of stats.achievements) {
     if (!ach.unlocked) continue;
     const inserted = db.prepare(
       'INSERT OR IGNORE INTO user_achievement_notifications (userId, achievementId) VALUES (?, ?)'
     ).run(userId, ach.id);
-    if (inserted.changes < 1) continue;
+    if (inserted.changes > 0) newIds.push(ach.id);
+  }
+  return newIds;
+}
 
-    await sendNotification(
-      `🏆 ${stats.userDisplayName} unlocked an achievement: ${ach.id}`
-    );
+/**
+ * Async: sends Telegram/ntfy notifications for newly unlocked achievements.
+ * Calls checkAndRecordNewAchievements internally.
+ */
+export async function notifyAchievementUnlocksForUser(userId: number): Promise<void> {
+  if (!isNotificationTypeEnabled('achievementUnlocked')) {
+    checkAndRecordNewAchievements(userId);
+    return;
+  }
+  const newIds = checkAndRecordNewAchievements(userId);
+  if (newIds.length === 0) return;
+  const user = db.prepare('SELECT displayName FROM users WHERE id = ?').get(userId) as { displayName: string } | undefined;
+  const name = user?.displayName || 'User';
+  for (const id of newIds) {
+    await sendNotification(`🏆 ${name} unlocked an achievement: ${id}`);
   }
 }

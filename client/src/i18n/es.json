@@ -261,11 +261,13 @@
       "ntfyDisabledHint": "Activa ntfy para configurar las notificaciones push.",
       "ntfyTestSent": "Notificación de prueba ntfy enviada.",
       "ntfyTestFailed": "No se pudo enviar la notificación de prueba ntfy.",
-"pendingValidations": "Validaciones pendientes",
+      "pendingValidations": "Validaciones pendientes",
       "pendingValidationsDesc": "Aprueba o rechaza tareas marcadas por niños cuando el modo estricto está activo.",
       "approve": "Aprobar",
       "reject": "Rechazar",
-      "noPendingValidations": "No hay validaciones pendientes."
+      "noPendingValidations": "No hay validaciones pendientes.",
+      "goalReward": "Bono de completado",
+      "goalRewardDesc": "Monedas bonus cuando se alcanza este objetivo"
     },
     "nav": {
       "home": "Inicio",
@@ -428,7 +430,21 @@
       "tomorrow": "Mañana",
       "inMinutes": "en {m}min",
       "inHours": "en {h}h",
-      "inHoursMinutes": "en {h}h {m}min"
+      "inHoursMinutes": "en {h}h {m}min",
+      "customCoins": "Monedas personalizadas",
+      "customCoinsDesc": "Dejar vacío para usar el valor por defecto",
+      "customCoinsPlaceholder": "Auto",
+      "allowEarlyCompletion": "Completar antes",
+      "allowEarlyCompletionDesc": "Se puede repetir en cualquier nuevo día del calendario",
+      "rotating": "Rotación",
+      "rotatingDesc": "Por turnos: cada asignado completa en rotación",
+      "currentTurn": "Turno: {name}",
+      "yourTurn": "Tu turno",
+      "waitingForTurn": "Esperando a {name}",
+      "duplicateTask": "Duplicar tarea",
+      "moveToRoom": "Mover a sala",
+      "taskDuplicated": "Tarea duplicada",
+      "taskMoved": "Tarea movida"
     },
     "avatars": {
       "cat": "Gato",
@@ -517,7 +533,8 @@
       "modeShared": "Compartido",
       "modeCustom": "Personalizado",
       "totalPercentage": "Total: {total}%",
-      "done": "hecho"
+      "done": "hecho",
+      "renameRoom": "Renombrar sala"
     },
     "common": {
       "save": "Guardar",
@@ -631,7 +648,13 @@
       "perfectMonth": "Mes perfecto",
       "perfectMonthDesc": "Consigue 4 semanas perfectas",
       "nightOwl": "Planificador Nocturno",
-      "nightOwlDesc": "Alcanza una racha de 60 días"
+      "nightOwlDesc": "Alcanza una racha de 60 días",
+      "unlocked": "¡Logro desbloqueado!",
+      "badge_bronze": "Bronce",
+      "badge_silver": "Plata",
+      "badge_gold": "Oro",
+      "badge_platinum": "Platino",
+      "badge_legend": "Leyenda"
     },
     "taskIcons": {
       "sparkle": "Brillo",

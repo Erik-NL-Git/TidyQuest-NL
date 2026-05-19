@@ -261,11 +261,13 @@
       "ntfyDisabledHint": "ntfy aktivieren, um Push-Benachrichtigungen einzurichten.",
       "ntfyTestSent": "ntfy-Testbenachrichtigung gesendet.",
       "ntfyTestFailed": "Senden der ntfy-Testbenachrichtigung fehlgeschlagen.",
-"pendingValidations": "Ausstehende Aufgabenfreigaben",
+      "pendingValidations": "Ausstehende Aufgabenfreigaben",
       "pendingValidationsDesc": "Aufgaben von Kindern im strengen Modus freigeben oder ablehnen.",
       "approve": "Freigeben",
       "reject": "Ablehnen",
-      "noPendingValidations": "Keine ausstehenden Freigaben."
+      "noPendingValidations": "Keine ausstehenden Freigaben.",
+      "goalReward": "Abschlussbonus",
+      "goalRewardDesc": "Bonus-Coins bei Erreichen dieses Ziels"
     },
     "nav": {
       "home": "Startseite",
@@ -428,7 +430,21 @@
       "tomorrow": "Morgen",
       "inMinutes": "in {m}Min",
       "inHours": "in {h}Std",
-      "inHoursMinutes": "in {h}Std {m}Min"
+      "inHoursMinutes": "in {h}Std {m}Min",
+      "customCoins": "Eigene Coins",
+      "customCoinsDesc": "Leer lassen für Standard basierend auf Aufwand",
+      "customCoinsPlaceholder": "Auto",
+      "allowEarlyCompletion": "Frühe Erledigung",
+      "allowEarlyCompletionDesc": "Kann an jedem neuen Kalendertag wiederholt werden",
+      "rotating": "Rotation",
+      "rotatingDesc": "Abwechselnd: jeder Zugewiesene ist der Reihe nach dran",
+      "currentTurn": "An der Reihe: {name}",
+      "yourTurn": "Du bist dran",
+      "waitingForTurn": "Warten auf {name}",
+      "duplicateTask": "Aufgabe duplizieren",
+      "moveToRoom": "In Raum verschieben",
+      "taskDuplicated": "Aufgabe dupliziert",
+      "taskMoved": "Aufgabe verschoben"
     },
     "avatars": {
       "cat": "Katze",
@@ -517,7 +533,8 @@
       "modeShared": "Geteilt",
       "modeCustom": "Benutzerdefiniert",
       "totalPercentage": "Gesamt: {total}%",
-      "done": "erledigt"
+      "done": "erledigt",
+      "renameRoom": "Raum umbenennen"
     },
     "common": {
       "save": "Speichern",
@@ -631,7 +648,13 @@
       "perfectMonth": "Perfekter Monat",
       "perfectMonthDesc": "Schaffe 4 perfekte Wochen",
       "nightOwl": "Nachtplaner",
-      "nightOwlDesc": "Erreiche eine 60-Tage-Serie"
+      "nightOwlDesc": "Erreiche eine 60-Tage-Serie",
+      "unlocked": "Erfolg freigeschaltet!",
+      "badge_bronze": "Bronze",
+      "badge_silver": "Silber",
+      "badge_gold": "Gold",
+      "badge_platinum": "Platin",
+      "badge_legend": "Legende"
     },
     "taskIcons": {
       "sparkle": "Funkeln",

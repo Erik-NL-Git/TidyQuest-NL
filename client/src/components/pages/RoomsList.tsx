@@ -82,9 +82,10 @@ interface RoomsListProps {
   onCreateRoom: (data: { name: string; roomType: string; color: string; accentColor: string; tasks: any[]; assignedUserId?: number | null }) => Promise<void>;
   onDeleteRoom: (roomId: number) => Promise<void>;
   onAssignRoom?: (roomId: number, assignedUserId: number | null, force?: boolean) => Promise<void>;
+  onRenameRoom?: (roomId: number, name: string) => Promise<void>;
 }
 
-export function RoomsList({ rooms, language, isAdmin, users, onSelectRoom, onCreateRoom, onDeleteRoom, onAssignRoom }: RoomsListProps) {
+export function RoomsList({ rooms, language, isAdmin, users, onSelectRoom, onCreateRoom, onDeleteRoom, onAssignRoom, onRenameRoom }: RoomsListProps) {
   const { taskName, t, roomName: translateRoomName, roomDisplayName } = useTranslation(language);
   const [showModal, setShowModal] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
@@ -101,6 +102,8 @@ export function RoomsList({ rooms, language, isAdmin, users, onSelectRoom, onCre
   const [creatingRoom, setCreatingRoom] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [newTaskName, setNewTaskName] = useState('');
+  const [renamingRoom, setRenamingRoom] = useState<number | null>(null);
+  const [renameValue, setRenameValue] = useState('');
 
   const sortedRooms = [...rooms].sort(
     (a, b) => getRoomHealth(a.tasks as any) - getRoomHealth(b.tasks as any)
@@ -282,7 +285,46 @@ export function RoomsList({ rooms, language, isAdmin, users, onSelectRoom, onCre
                   border: `2px solid ${room.accentColor}33`,
                 }}><RoomIcon /></div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--warm-text)' }}>{roomDisplayName(room.name, room.roomType)}</div>
+                  {renamingRoom === room.id ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }} onClick={(e) => e.stopPropagation()}>
+                      <input
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onKeyDown={async (e) => {
+                          if (e.key === 'Enter') {
+                            if (renameValue.trim()) { if (onRenameRoom) await onRenameRoom(room.id, renameValue.trim()); else await api.updateRoom(room.id, { name: renameValue.trim() }); }
+                            setRenamingRoom(null);
+                          } else if (e.key === 'Escape') {
+                            setRenamingRoom(null);
+                          }
+                        }}
+                        autoFocus
+                        className="tq-input"
+                        style={{ fontSize: 15, fontWeight: 800, padding: '4px 8px' }}
+                      />
+                      <button
+                        onClick={async (e) => { e.stopPropagation(); if (renameValue.trim()) { if (onRenameRoom) await onRenameRoom(room.id, renameValue.trim()); else await api.updateRoom(room.id, { name: renameValue.trim() }); } setRenamingRoom(null); }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--warm-accent)', fontSize: 16, fontWeight: 700 }}
+                        title={t('common.save')}
+                      >✓</button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setRenamingRoom(null); }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--warm-text-muted)', fontSize: 16, fontWeight: 700 }}
+                        title={t('common.cancel')}
+                      >✕</button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--warm-text)' }}>{roomDisplayName(room.name, room.roomType)}</div>
+                      {isAdmin && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setRenamingRoom(room.id); setRenameValue(room.name); }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--warm-text-light)', fontSize: 12, padding: '2px 4px', lineHeight: 1 }}
+                          title={t('rooms.renameRoom')}
+                        >✏️</button>
+                      )}
+                    </div>
+                  )}
                   <div style={{ fontSize: 12, color: 'var(--warm-text-light)', fontWeight: 600 }}>
                     {room.tasks.length} {t('rooms.tasks')} &middot; {healthLabel(rh)}
                   </div>

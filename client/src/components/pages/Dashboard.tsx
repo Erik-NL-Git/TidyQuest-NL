@@ -120,6 +120,7 @@ interface DashboardProps {
     pendingRewardRequests?: Array<{ id: number; title: string; displayName: string; costCoins: number; redeemedAt: string; status: 'requested' | 'approved' | 'rejected' }>;
     currentUser: CurrentUser;
     recentActivity: ActivityEntry[];
+    badges?: Record<number, string | null>;
   };
   family: FamilyMember[];
   users?: Array<{ id: number; displayName: string; role: string; avatarColor: string; avatarType?: string; avatarPreset?: string; avatarPhotoUrl?: string }>;
@@ -149,7 +150,15 @@ const Dashboard: React.FC<DashboardProps> = ({
   leaderboardPeriod = 'week',
 }) => {
   const { taskName, roomDisplayName, timeAgo, t } = useTranslation(language);
-  const { houseHealth, rooms, todaysQuests, nextTasks, readyToComplete, scheduledUpcoming, onDemandQuests, completedToday = [], myGoal, childrenGoals = [], pendingRewardRequests = [], currentUser, recentActivity } = data;
+  const { houseHealth, rooms, todaysQuests, nextTasks, readyToComplete, scheduledUpcoming, onDemandQuests, completedToday = [], myGoal, childrenGoals = [], pendingRewardRequests = [], currentUser, recentActivity, badges } = data;
+
+  const BADGE_COLORS: Record<string, string> = {
+    bronze: '#CD7F32',
+    silver: '#A8A9AD',
+    gold: '#FFD700',
+    platinum: '#B0C4DE',
+    legend: '#9B59B6',
+  };
   const allReadyTasks = readyToComplete ?? todaysQuests.filter(q => !q.onDemand);
   const allScheduledTasks = scheduledUpcoming ?? nextTasks;
   const allOnDemandTasks = onDemandQuests ?? todaysQuests.filter(q => q.onDemand);
@@ -797,7 +806,29 @@ const Dashboard: React.FC<DashboardProps> = ({
               >
                 #{i + 1}
               </div>
-              <UserAvatar name={u.displayName} color={u.avatarColor} size={32} avatarType={u.avatarType as any} avatarPreset={u.avatarPreset} avatarPhotoUrl={u.avatarPhotoUrl} />
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                <UserAvatar name={u.displayName} color={u.avatarColor} size={32} avatarType={u.avatarType as any} avatarPreset={u.avatarPreset} avatarPhotoUrl={u.avatarPhotoUrl} />
+                {badges?.[u.id] && (
+                  <span
+                    title={t(`achievements.badge_${badges[u.id]}`)}
+                    style={{
+                      fontSize: 8,
+                      background: BADGE_COLORS[badges[u.id]!] || '#888',
+                      color: 'white',
+                      borderRadius: '50%',
+                      width: 16,
+                      height: 16,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      position: 'absolute',
+                      bottom: -2,
+                      right: -2,
+                      fontWeight: 900,
+                    }}
+                  >★</span>
+                )}
+              </div>
               <div
                 style={{
                   flex: 1,

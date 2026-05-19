@@ -198,6 +198,10 @@ export function initDatabase() {
     `ALTER TABLE user_goals ADD COLUMN status TEXT NOT NULL DEFAULT 'active'`,
     `ALTER TABLE user_goals ADD COLUMN completedAt TEXT`,
     `ALTER TABLE users ADD COLUMN isParticipant INTEGER NOT NULL DEFAULT 1`,
+    `ALTER TABLE tasks ADD COLUMN customCoins INTEGER`,
+    `ALTER TABLE tasks ADD COLUMN allowEarlyCompletion INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE tasks ADD COLUMN rotationCurrentUserId INTEGER REFERENCES users(id) ON DELETE SET NULL`,
+    `ALTER TABLE user_goals ADD COLUMN rewardCoins INTEGER NOT NULL DEFAULT 0`,
   ];
 
   for (const sql of migrations) {

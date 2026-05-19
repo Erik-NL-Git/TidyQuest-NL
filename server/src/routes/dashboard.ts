@@ -212,6 +212,23 @@ router.get('/', (req: AuthRequest, res: Response) => {
     ).all()
     : [];
 
+  // Compute achievement badge tier per user (based on total approved completions)
+  function getBadgeTier(completions: number): string | null {
+    if (completions >= 500) return 'legend';
+    if (completions >= 250) return 'platinum';
+    if (completions >= 100) return 'gold';
+    if (completions >= 25) return 'silver';
+    if (completions >= 1) return 'bronze';
+    return null;
+  }
+  const completionCounts = db.prepare(
+    "SELECT userId, COUNT(*) as cnt FROM task_completions WHERE status = 'approved' GROUP BY userId"
+  ).all() as { userId: number; cnt: number }[];
+  const badges: Record<number, string | null> = {};
+  for (const row of completionCounts) {
+    badges[row.userId] = getBadgeTier(row.cnt);
+  }
+
   res.json({
     houseHealth,
     rooms: roomsWithHealth,
@@ -226,6 +243,7 @@ router.get('/', (req: AuthRequest, res: Response) => {
     pendingRewardRequests,
     currentUser: user,
     recentActivity,
+    badges,
     vacation: { vacationMode: vacation.isVacation, vacationStartDate: vacation.startDate, vacationEndDate: vacation.endDate },
   });
 });

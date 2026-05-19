@@ -81,6 +81,9 @@ function runSchema(db: InstanceType<typeof Database>) {
       assignmentMode TEXT NOT NULL DEFAULT 'first',
       onDemand INTEGER NOT NULL DEFAULT 0,
       showInDashboard INTEGER NOT NULL DEFAULT 0,
+      customCoins INTEGER,
+      allowEarlyCompletion INTEGER NOT NULL DEFAULT 0,
+      rotationCurrentUserId INTEGER REFERENCES users(id) ON DELETE SET NULL,
       createdAt TEXT NOT NULL DEFAULT (datetime('now')),
       FOREIGN KEY (roomId) REFERENCES rooms(id) ON DELETE CASCADE
     );
@@ -131,6 +134,7 @@ function runSchema(db: InstanceType<typeof Database>) {
       endAt TEXT,
       status TEXT NOT NULL DEFAULT 'active',
       completedAt TEXT,
+      rewardCoins INTEGER NOT NULL DEFAULT 0,
       createdBy INTEGER,
       createdAt TEXT NOT NULL DEFAULT (datetime('now')),
       FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
